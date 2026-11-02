@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planner Produzione Settimanale</title>
+<style>
+:root{--ink:#263a35;--muted:#64756f;--bg:#f4f7f4;--paper:#ffffff;--line:#d8e2dc;--navy:#28594e;--blue:#d9eee7;--blue2:#f0f8f4;--green:#19704e;--burgundy:#28594e;--burgundy-dark:#1d433a;--azure:#d9eee7;--shadow:0 3px 10px rgba(38,58,53,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Arial,sans-serif}
+header{background:linear-gradient(120deg,#1d433a 0%,#28594e 58%,#4c8774 100%);color:#fff;padding:25px 22px;box-shadow:0 5px 16px rgba(29,67,58,.16)}
+.top{max-width:1700px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;gap:13px;align-items:center}.logo{height:50px;width:50px;border-radius:16px;background:linear-gradient(135deg,#d9eee7,#ffffff);color:#1d433a;display:grid;place-items:center;font-size:25px;box-shadow:0 5px 16px #280b192e}
+h1{font-size:clamp(22px,2.6vw,31px);margin:0;letter-spacing:-.5px}header p{margin:4px 0 0;color:#f9eaf0}
+.actions{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:8px;padding:10px 14px;font:700 13px inherit;cursor:pointer;transition:transform .15s,filter .15s;box-shadow:0 3px 9px rgba(40,20,30,.08)}button:hover{transform:translateY(-1px);filter:brightness(.98)}
+.btn-white{background:#dff4ff;color:#50172e}.btn-soft{background:#ffffff16;color:white;border:1px solid #f4dce5a8}.btn-blue{background:#8dcff1;color:#183b54}.btn-green{background:#12805c;color:white}.btn-red{background:#50172e;color:#fff}.btn-grey{background:#e5f3fb;color:#24435a}
+main{max-width:1700px;margin:22px auto;padding:0 18px 35px}
+.steps{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.step{background:#fff;border:1px solid #dce4ef;border-radius:11px;padding:10px 13px;display:flex;gap:9px;align-items:center;box-shadow:0 2px 7px #13213b08}.num{height:26px;width:26px;border-radius:9px;background:#dff4ff;color:#6a2341;display:grid;place-items:center;font-weight:900}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:12px;margin-bottom:18px}.metric{background:linear-gradient(145deg,#fff 55%,#f0f8f4);border:1px solid #d7e5dc;border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid #72b99b}.metric small{color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.7px;font-size:11px}.metric strong{display:block;font-size:25px;margin-top:4px;letter-spacing:-.5px}.metric span{font-size:12px;color:var(--muted)}
+.panel{background:#fff;border:1px solid #d4e1da;border-radius:10px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:14px}.panel-head{padding:16px 19px;border-bottom:1px solid #d8e6df;background:linear-gradient(90deg,#eff8f3,#ffffff);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.panel-head h2{font-size:17px;margin:0;color:#28594e}.sub{font-size:12px;color:var(--muted);margin-top:3px}.key{display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbd5e1;border-radius:7px;padding:4px 7px;font-size:11px;font-weight:800;background:#fff}.dot{height:9px;width:9px;border-radius:3px;display:inline-block}
+.table-wrap{overflow:auto}table{border-collapse:separate;border-spacing:0;width:100%;min-width:1050px}
+th,td{border-right:1px solid #9cabc0;border-bottom:1px solid #9cabc0;padding:5px;text-align:center}
+thead th{background:#dff2fc;color:#27465d;font-size:11px;font-weight:900;position:sticky;top:0;z-index:3}
+thead tr:first-child th{border-top:2px solid #2c7559}
+th:first-child,td:first-child{position:sticky;left:0;z-index:4;min-width:125px;text-align:left;background:#fff4f7;border-left:2px solid #2c7559;font-weight:900}
+tbody tr:last-child td{border-bottom:2px solid #2c7559}
+td:last-child,th:last-child{border-right:2px solid #2c7559}
+.dayhead{border-left:2px solid #9bbbd0!important}
+.line-name{font-size:13px}.line-name span{display:block;font-size:10px;color:#68768b;font-weight:600;margin-top:2px}
+.mat-cell{min-width:96px;height:75px;vertical-align:middle;transition:background .15s}
+.mat-effective{font-size:12px;font-weight:900;display:block;min-height:18px;margin-bottom:5px}
+.inherited{font-size:9px;font-weight:700;opacity:.76;display:block;margin-top:1px}
+.material-select{width:100%;border:1px solid #8292a8;border-radius:7px;padding:6px 3px;font-size:11px;font-weight:800;background:#ffffffd9;color:#25334b;cursor:pointer}
+.kg-cell{min-width:86px;background:#f4faff;height:44px}.kg-input{width:100%;border:1px solid #9dc9e1;border-radius:8px;padding:8px 4px;text-align:right;font-size:13px;font-weight:800;color:#292333;background:white}.kg-input:focus,.material-select:focus,.field input:focus,.field select:focus{outline:2px solid #8ba6ff;border-color:#315ee8}
+.kg-label{font-size:10px;color:#65758b;font-weight:700}
+.c-PE80{background:#e3eaf0!important;color:#34495e}.c-PE100{background:#d5f0e2!important;color:#176345}.c-PE100RC{background:#b8dce9!important;color:#16485d}.c-MISCELA{background:#e9e3f5!important;color:#59447a}.c-RIGENERATO{background:#f7e2c9!important;color:#79501d}.c-RIGENERATO80070{background:#f5d9b2!important;color:#71420b}.c-PE112{background:#dce8fb!important;color:#2e4f86}.c-STOP{background:#edf0f2!important;color:#52697c}
+.c-PE80 .material-select{background:#d9eaff!important;border-color:#467eb5!important}.c-PE100 .material-select{background:#c9f2d6!important;border-color:#27834a!important}.c-PE100RC .material-select{background:#fff0a8!important;border-color:#9a7100!important}.c-MISCELA .material-select{background:#e8d4fa!important;border-color:#8752b5!important}.c-RIGENERATO .material-select{background:#ffdfb8!important;border-color:#c87519!important}.c-RIGENERATO80070 .material-select{background:#df6b32!important;color:white!important;border-color:#9d3d13!important}.c-PE112 .material-select{background:#d7e0ff!important;border-color:#3e5fb9!important}.c-STOP .material-select{background:#656a73!important;color:white!important;border-color:#34373c!important}
+.content-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}.side{position:sticky;top:10px}
+.summary{min-width:0!important;width:100%}.summary th,.summary td{padding:9px 12px;text-align:right}.summary th:first-child,.summary td:first-child{position:static;min-width:0;text-align:left;background:inherit;border-left:0}.summary thead th{position:static}.summary .total td{background:#e1f4ff;font-weight:900;border-top:2px solid #2c7559}
+.material-swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.blends{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:15px}.blend{border:1px solid #d4e5db;border-radius:13px;padding:13px;background:linear-gradient(145deg,#f0f8f4,#ffffff)}.blend h3{margin:0 0 8px;font-size:13px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{display:flex;flex-direction:column;gap:4px;margin:5px 0}.field label{font-size:10px;font-weight:900;text-transform:uppercase;color:#63738a;letter-spacing:.4px}.field input,.field select{min-width:0;width:100%;border:1px solid #aab8ca;border-radius:8px;padding:8px;background:white;font:inherit}
+.archive-list{padding:10px 14px}.archive-item{padding:11px 0;border-bottom:1px solid #e0e6ef;display:flex;justify-content:space-between;align-items:center;gap:8px}.archive-item:last-child{border-bottom:0}.archive-item strong{display:block}.archive-item small{color:var(--muted)}.archive-actions{display:flex;gap:5px;flex-wrap:wrap}.mini{padding:7px 9px;font-size:11px}.empty{padding:18px;color:var(--muted);font-size:13px;text-align:center}.notice{padding:12px 16px;background:#edf7f1;border-top:1px solid #d3e8dc;color:#28594e;font-size:12px}
+footer{font-size:11px;color:#68768b;padding:0 3px}
+@media(max-width:1100px){.content-grid{grid-template-columns:1fr}.side{position:static}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){header{padding:17px 12px}main{padding:0 8px 24px}.metrics{gap:7px}.metric{padding:11px}.metric strong{font-size:21px}.blends{grid-template-columns:1fr}.step{font-size:12px}.panel-head{padding:12px}}
+@media print{header .actions,button,.steps,.notice,footer{display:none!important}body{background:white}.content-grid{display:block}.side{position:static}.panel,.metric{box-shadow:none;break-inside:avoid}main{max-width:none}}
+
+/* Tema minimal: rosso scuro e grigio siderale */
+:root{--ink:#24262b;--muted:#626872;--bg:#eceef1;--paper:#fff;--line:#c7cbd1;--navy:#258563;--blue:#e4e6e9;--blue2:#f5f6f7;--green:#258563;--burgundy:#258563;--burgundy-dark:#17382f;--azure:#dfe2e6;--shadow:0 4px 16px rgba(22,24,29,.07)}
+body{background:#e9ebee;color:#25272d;font-size:15px}
+header{background:linear-gradient(125deg,#19352c 0%,#258563 58%,#8b3540 100%);padding:22px 24px;box-shadow:0 5px 18px #17191f24}
+header p{color:#f3e8ea}.logo{border-radius:12px;background:#dfe2e6;color:#17382f;box-shadow:none}
+button{border-radius:7px;box-shadow:none;font-size:13px;padding:10px 13px}
+.btn-white{background:#e1e3e6;color:#19352c}.btn-soft{background:#ffffff12;color:white;border:1px solid #ffffff70}.btn-blue{background:#c7cbd1;color:#25272d}.btn-green{background:#258563;color:white}.btn-red{background:#3d1118;color:white}.btn-grey{background:#e2e4e7;color:#292b30}
+main{max-width:1780px;margin:20px auto;padding:0 18px 35px}
+.step{border-color:#d3d5da;border-radius:8px;box-shadow:none}.num{background:#258563;color:white;border-radius:6px}
+.metric{background:#fff;border:1px solid #d3d5da;border-top:3px solid #258563;border-radius:9px;box-shadow:none;padding:15px 17px}.metric small{color:#626872}.metric strong{color:#292b30}
+.panel{border:1px solid #c9cdd3;border-radius:9px;box-shadow:0 3px 12px #20232a0b;margin-bottom:18px}.panel-head{background:#f0f1f3;border-bottom:1px solid #c9cdd3;padding:15px 18px}.panel-head h2{color:#641923}.sub{color:#60656e;font-size:13px}
+.chip{border-color:#c8cbd1;color:#292b30;border-radius:5px;font-size:11px}.dot{border-radius:2px}
+.table-wrap{padding:5px;background:#f7f7f8}table{border-spacing:0 0;width:100%;min-width:1100px}
+th,td{border-right:1px solid #c5c9cf;border-bottom:1px solid #c5c9cf;padding:6px;text-align:center}
+thead th{background:#d9dce1;color:#282a30;font-size:12px;border-top:2px solid #258563}
+thead tr:first-child th{border-top:2px solid #258563}
+th:first-child,td:first-child{background:#e5e6e9;border-left:2px solid #258563;color:#27292e;min-width:138px}
+/* Stacco netto tra ogni linea (gruppo materiale + kg) */
+#productionTable tbody tr:nth-child(4n+1) td{border-top:4px solid #258563}
+#productionTable tbody tr:nth-child(4n+2) td{border-bottom:3px solid #aeb2b9}
+#productionTable tbody tr:nth-child(4n+3) td{border-top:0}
+#productionTable tbody tr:nth-child(4n) td{border-bottom:4px solid #258563}
+.line-name{font-size:14px;font-weight:900;letter-spacing:.2px}.line-name span{font-size:11px;color:#50545c;font-weight:700}
+.mat-cell{min-width:102px;height:79px}.mat-effective{font-size:13px;font-weight:900}.inherited{font-size:10px;color:#363940;opacity:1}
+.material-select{border:1px solid #a9adb5;border-radius:5px;padding:7px 4px;font-size:12px;font-weight:800;color:#25272d;background:#fff}
+.kg-cell{min-width:89px;background:#f0f1f3;height:47px}.kg-input{border:1px solid #aeb2b9;border-radius:5px;padding:9px 4px;font-size:14px;font-weight:800;color:#24262b;background:#fff}.kg-label{color:#555a63}
+.c-PE80{background:#91bde8!important;color:#102d4a!important}.c-PE100{background:#70cf91!important;color:#103d22!important}.c-PE100RC{background:#e4b51f!important;color:#332300!important}.c-MISCELA{background:#bd91e8!important;color:#35144f!important}.c-RIGENERATO{background:#f3a34d!important;color:#512600!important}.c-RIGENERATO80070{background:#df6b32!important;color:#ffffff!important}.c-PE112{background:#718fe0!important;color:#ffffff!important}.c-STOP{background:#656a73!important;color:#ffffff!important}
+.summary th,.summary td{padding:10px 12px}.summary .total td{background:#e1e3e6;border-top:2px solid #258563}
+.blend{border:1px solid #d0d3d8;border-radius:8px;background:#f5f5f6}.field label{font-size:11px;color:#4e525a}.field input,.field select{border:1px solid #b6bac1;border-radius:5px}
+.archive-item{padding:14px 4px;border-bottom:1px solid #d6d8dd}.archive-item strong{font-size:15px;color:#292b30}.archive-item small{font-size:12px;color:#5d626b}.notice{background:#f0f1f3;border-top:1px solid #d1d4da;color:#42464e}
+footer{color:#626872;margin-top:12px}
+@media(max-width:600px){header{padding:16px 12px}main{padding:0 8px 24px}.metric{padding:11px}.panel-head{padding:12px}}
+
+
+/* Aggiornamento richiesto: PE100 RC ocra e layout compatto su una sola pagina */
+.c-PE100RC{background:#d6ad35!important;color:#33280a!important}
+.c-PE100RC .material-select{background:#fff0a8!important;color:#332300!important;border:2px solid #9a7100!important;font-weight:900}
+.chip:has(.c-PE100RC), .dot.c-PE100RC{background:#d6ad35!important}
+/* Larghezza ripristinata alla versione originale dell’app */
+.content-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}
+.side{position:sticky;top:8px;display:flex;flex-direction:column;gap:10px;margin-top:0;min-width:0}
+.side .panel{min-width:0}
+.side .table-wrap{overflow-x:auto}
+.side .summary{min-width:0!important;width:100%;table-layout:auto}
+.side .summary th,.side .summary td{padding:6px 7px;font-size:11px}
+.side .panel-head{padding:9px 10px}
+.panel{margin-bottom:10px}
+main{max-width:1780px;margin:20px auto;padding:0 18px 35px}
+header{padding:22px 24px}
+.logo{height:50px;width:50px;font-size:25px}
+h1{font-size:clamp(22px,2.6vw,31px)}
+header p{font-size:14px}
+.steps{gap:10px;margin-bottom:16px}.step{padding:10px 13px;font-size:14px}.num{height:26px;width:26px}
+.metrics{gap:12px;margin-bottom:18px}.metric{padding:15px 17px}.metric strong{font-size:25px}
+.panel-head{padding:15px 18px}.panel-head h2{font-size:17px}.sub{font-size:13px}
+.table-wrap{padding:5px;overflow-x:auto}
+table{min-width:1100px;width:100%;table-layout:auto}
+#productionTable th:first-child,#productionTable td:first-child{width:auto;min-width:138px}
+#productionTable th,#productionTable td{padding:6px;font-size:12px}
+#productionTable thead th{font-size:12px;line-height:1.3}
+#productionTable .line-name{font-size:14px;line-height:1.3}
+#productionTable .line-name span{font-size:11px;line-height:1.2}
+#productionTable .mat-cell{min-width:102px;height:79px;padding:6px}
+#productionTable .mat-effective{font-size:13px;line-height:1.2;min-height:18px;margin-bottom:5px;overflow-wrap:anywhere}
+#productionTable .inherited{font-size:10px;line-height:1.2;margin-top:1px}
+#productionTable .material-select{font-size:12px;padding:7px 4px;border-radius:5px}
+#productionTable .kg-cell{min-width:89px;height:47px}
+#productionTable .kg-input{font-size:14px;padding:9px 4px;border-radius:5px;min-width:0}
+.key{gap:4px}.chip{font-size:9px;padding:3px 5px}
+.blends{padding:8px;gap:8px}.blend{padding:8px}.fields{gap:5px}.field{margin:3px 0}.field input,.field select{padding:5px;font-size:12px}
+.summary th,.summary td{padding:6px 8px;font-size:12px}
+.notice{padding:7px 10px;font-size:11px}
+footer{font-size:10px;margin-top:6px}
+@media(max-width:1250px){.content-grid{grid-template-columns:minmax(0,1fr) 240px;gap:10px}.side .summary th,.side .summary td{padding:6px 5px;font-size:11px}}
+@media(max-width:950px){.content-grid{grid-template-columns:1fr}.side{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#productionTable{min-width:1100px}}
+@media print{@page{size:landscape;margin:7mm}header{padding:6px 10px}main{padding:0;margin:0}.steps,.actions,.notice,footer{display:none!important}.content-grid{display:block}.side{display:grid;grid-template-columns:1fr 1fr}.panel{break-inside:avoid}.table-wrap{overflow:visible}#productionTable{min-width:0}}
+
+
+/* Riepilogo materiali più grande e stile più morbido/ondulato */
+.content-grid{grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+.side .panel{border-radius:20px;overflow:hidden;box-shadow:0 5px 18px rgba(35,39,48,.09);border:1px solid #e1e3e8}
+.side .panel-head{padding:14px 15px;background:linear-gradient(135deg,#f7f7f9 0%,#eceef2 55%,#f8f0f1 100%);border-bottom:1px solid #e1e3e8}
+.side .panel-head h2{font-size:19px;letter-spacing:.1px}
+.side .sub{font-size:12px;line-height:1.4}
+.side .table-wrap{padding:8px 10px 12px}
+.side .summary{min-width:0!important;width:100%;border-collapse:separate;border-spacing:0 5px;font-size:14px}
+.side .summary th{font-size:13px;padding:10px 9px;background:#258563;color:#fff}
+.side .summary th:first-child{border-radius:12px 0 0 12px}
+.side .summary th:last-child{border-radius:0 12px 12px 0;text-align:right}
+.side .summary td{padding:10px 9px;font-size:14px;background:#f5f6f8;border-top:1px solid #e6e8ed;border-bottom:1px solid #e6e8ed}
+.side .summary td:first-child{border-left:1px solid #e6e8ed;border-radius:12px 0 0 12px;font-weight:750}
+.side .summary td:last-child{border-right:1px solid #e6e8ed;border-radius:0 12px 12px 0;text-align:right;font-size:15px;font-weight:850;white-space:nowrap}
+.side .summary .total td{background:#f2e4e7;border-top:2px solid #258563;font-size:15px;font-weight:900}
+/* Curve più morbide per tutta l'interfaccia */
+:root{--curve:18px}
+.panel{border-radius:20px;overflow:hidden;box-shadow:0 5px 18px rgba(35,39,48,.075);border:1px solid #e2e4e9}
+.panel-head{border-radius:18px 18px 0 0}
+.metric{border-radius:20px;overflow:hidden;position:relative}
+.metric:after{content:"";position:absolute;right:-22px;top:-26px;width:92px;height:74px;border-radius:48% 52% 61% 39% / 44% 37% 63% 56%;background:rgba(37,133,99,.055);pointer-events:none}
+.step{border-radius:999px}
+.num{border-radius:50%}
+button,.btn-white,.btn-soft,.btn-red,.btn-grey{border-radius:999px}
+.material-select,.kg-input,.field input,.field select{border-radius:12px}
+.blend{border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.chip{border-radius:999px;padding:5px 9px}
+.logo{border-radius:18px 18px 22px 12px}
+header{border-radius:0 0 28px 28px}
+.notice{border-radius:0 0 18px 18px}
+.archive-item{border-radius:12px;padding:12px 10px}
+@media(max-width:1250px){.content-grid{grid-template-columns:minmax(0,1fr) 300px;gap:12px}.side .summary td,.side .summary th{padding:8px 7px;font-size:12px}.side .summary td:last-child{font-size:13px}}
+@media(max-width:950px){.content-grid{grid-template-columns:1fr}.side{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}.side .summary td,.side .summary th{font-size:14px;padding:10px 9px}}
+@media(max-width:600px){.side{grid-template-columns:1fr}.panel,.metric{border-radius:16px}header{border-radius:0 0 20px 20px}}
+
+
+.week-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 18px;padding:15px 18px;border:1px solid #c9cdd3;border-radius:18px;background:linear-gradient(115deg,#fff 0%,#f3f4f6 55%,#fceff1 100%);box-shadow:0 5px 16px rgba(22,24,29,.06)}
+.week-toolbar .week-title{font-size:15px;font-weight:900;color:#258563}
+.week-toolbar .week-help{font-size:12px;color:#626872;margin-top:3px}
+.week-picker-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.week-picker-wrap label{font-size:12px;font-weight:900;color:#17382f}
+.week-picker-wrap input{border:1px solid #aeb3bb;border-radius:12px;padding:10px 12px;background:white;font:700 14px "Segoe UI",Arial,sans-serif;color:#25272d;min-width:175px}
+.week-range{display:inline-block;padding:8px 12px;border-radius:999px;background:#258563;color:#fff;font-size:12px;font-weight:800}
+.day-date{display:block;font-size:10px;font-weight:800;color:#258563;margin-top:3px}
+@media(max-width:600px){.week-toolbar{padding:12px}.week-picker-wrap{width:100%}.week-picker-wrap input{flex:1;min-width:150px}}
+
+
+/* Grafica morbida e ondulata */
+body{background:radial-gradient(ellipse at 8% 0%,#f9f3f4 0,transparent 34%),radial-gradient(ellipse at 100% 18%,#eef0f4 0,transparent 30%),#eceef1}
+header{border-radius:0 0 34px 34px;background:linear-gradient(125deg,#19352c 0%,#258563 52%,#9c4b57 100%);position:relative;overflow:hidden}
+header:after{content:"";position:absolute;left:-4%;right:-4%;bottom:-25px;height:48px;border-radius:50% 50% 0 0 / 70% 70% 0 0;background:#eceef1;opacity:.17;pointer-events:none}
+.logo{border-radius:19px}
+.week-toolbar{border-radius:24px;background:linear-gradient(120deg,#fff 0%,#f7f1f2 55%,#eef0f4 100%);border:1px solid #d8cbd0;box-shadow:0 8px 22px #19352c0b;padding:17px 20px}
+.week-picker-wrap input{border-radius:16px;border-color:#c4aab0}
+.week-range{border-radius:999px;background:linear-gradient(110deg,#258563,#9b4b57);padding:9px 14px}
+.panel{border-radius:22px;overflow:hidden;box-shadow:0 8px 24px rgba(32,26,30,.055);border-color:#d4cdd1}
+.panel-head{border-radius:22px 22px 0 0;background:linear-gradient(105deg,#f7eff1,#f1f2f4 65%,#fff)}
+.metric{border-radius:22px;background:linear-gradient(145deg,#fff 45%,#f7edef);border-top:4px solid #258563}
+.step{border-radius:18px}
+.blends{gap:14px;padding:17px}
+.blend{border-radius:24px;padding:17px;background:linear-gradient(145deg,#fff6f7,#f2f3f6);border:1px solid #dfcbd0;box-shadow:inset 0 1px 0 #fff,0 5px 15px #19352c08}
+.blend h3{font-size:15px;color:#258563}
+.field input,.field select{border-radius:13px;padding:10px 11px;border-color:#c9c3c8}
+button{border-radius:13px}
+.material-select{border-radius:12px}
+.kg-input{border-radius:13px}
+.today-head{background:#f7dfe4!important;color:#258563!important;box-shadow:inset 0 -3px 0 #258563}
+.day-date{display:block;font-size:10px;font-weight:900;color:#258563;margin-top:3px}
+.blend-status{grid-column:1/-1;padding:9px 12px;border-radius:14px;font-size:12px;font-weight:800;background:#f1f2f4;color:#555b65}
+.blend-status.ok{background:#e4f5e9;color:#176345}
+.blend-status.warn{background:#fff0d8;color:#7a4b08}
+.blend-explain{font-size:12px;color:#656a73;line-height:1.5;margin:0 17px 14px}
+@media(max-width:600px){.week-toolbar{border-radius:20px}.blend{border-radius:20px}}
+
+
+/* Rifinitura grafica: forme più morbide, curve e andamento ondulato */
+body{background:radial-gradient(ellipse at 0% 5%,#f8e9ed 0%,transparent 38%),radial-gradient(ellipse at 100% 22%,#e6e9f0 0%,transparent 35%),linear-gradient(180deg,#f6f5f7 0%,#eceef1 100%)}
+header{border-radius:0 0 48px 48px;background:linear-gradient(125deg,#3c0c14 0%,#6f1b29 45%,#a35462 100%);box-shadow:0 12px 28px rgba(65,15,26,.16)}
+header:before{content:"";position:absolute;right:-6%;top:-68px;width:54%;height:180px;border-radius:48% 52% 57% 43%;background:rgba(255,255,255,.07);transform:rotate(-9deg);pointer-events:none}
+header:after{left:-6%;right:-6%;bottom:-31px;height:62px;border-radius:48% 52% 0 0 / 75% 75% 0 0;transform:rotate(-1.5deg);opacity:.24}
+main{padding-top:22px}
+.panel,.metric,.week-toolbar,.step,.blend{border-radius:26px;border:1px solid rgba(116,31,43,.12);box-shadow:0 9px 25px rgba(42,25,31,.055)}
+.panel{overflow:hidden}
+.panel-head{background:linear-gradient(110deg,#e8f4ed 0%,#f3f8f5 65%,#fff 100%);border-bottom:1px solid #d7e4dc;padding:15px 18px}
+.metric{border-radius:25px;background:linear-gradient(145deg,#fff 0%,#fff 56%,#e8f4ed 100%);position:relative;overflow:hidden}
+.metric:after{content:"";position:absolute;right:-16px;bottom:-27px;width:92px;height:62px;border-radius:55% 45% 50% 50%;background:rgba(37,133,99,.055);transform:rotate(-18deg)}
+.week-toolbar{border-radius:28px;padding:19px 22px;background:linear-gradient(115deg,#fff 0%,#f3f8f5 55%,#edf0f5 100%)}
+.week-picker-wrap input{border-radius:16px;box-shadow:inset 0 1px 3px rgba(20,20,20,.04)}
+.table-wrap{border-radius:0 0 25px 25px;overflow:auto}
+#productionTable thead th{background:linear-gradient(110deg,#1b4739,#267255);border-color:rgba(255,255,255,.16)}
+#productionTable thead th.dayhead{border-radius:13px 13px 0 0}
+#productionTable td,#productionTable th{border-color:#d7e4dc}
+#productionTable tbody tr:nth-child(4n+1) td:first-child,#productionTable tbody tr:nth-child(4n+2) td:first-child{background:#f0f7f2}
+.kg-input,.material-select,.field input,.field select{border-radius:15px}
+button{border-radius:15px;transition:transform .16s ease,box-shadow .16s ease}
+button:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(24,62,47,.10)}
+.blend{border-radius:27px;background:linear-gradient(145deg,#eff7f2 0%,#f3f8f5 72%,#eef0f4 100%);position:relative;overflow:hidden}
+.blend:before{content:"";position:absolute;right:-24px;top:-35px;width:135px;height:90px;border-radius:47% 53% 40% 60%;background:rgba(37,133,99,.045);transform:rotate(-17deg);pointer-events:none}
+.blend h3{position:relative;z-index:1;border-radius:999px;display:inline-flex;padding:7px 13px;background:#dcefe5}
+.blend-status{border-radius:17px}
+#totalsTable,#lineTotals{border-collapse:separate;border-spacing:0 4px}
+#totalsTable tbody tr,#lineTotals tbody tr{background:#fff}
+#totalsTable tbody td:first-child,#lineTotals tbody td:first-child{border-radius:13px 0 0 13px}
+#totalsTable tbody td:last-child,#lineTotals tbody td:last-child{border-radius:0 13px 13px 0}
+@media(max-width:700px){.panel,.metric,.week-toolbar,.blend{border-radius:20px}header{border-radius:0 0 30px 30px}}
+
+
+/* Intestazioni giorni, date e turni in bianco sul verde scuro */
+#productionTable thead th.dayhead,
+#productionTable thead th.dayhead *,
+#productionTable thead th.shifthead,
+#productionTable thead th.shifthead *,
+#productionTable thead th.dayhead .day-date {
+  color:#fff !important;
+}
+#productionTable thead th.dayhead,
+#productionTable thead th.shifthead {
+  background:linear-gradient(110deg,#1b4739,#267255) !important;
+}
+#productionTable thead th.dayhead .day-date {
+  opacity:1 !important;
+}
+
+</style>
+<style id="rimozione-verde-completa">
+/* Tema rosso scuro completo: nessun verde nell'interfaccia */
+:root{--ink:#292329!important;--muted:#71676b!important;--bg:#f1edef!important;--paper:#fff!important;--line:#dfd3d7!important;--navy:#651725!important;--blue:#f0e5e8!important;--blue2:#f8f4f5!important;--green:#873544!important;--burgundy:#651725!important;--burgundy-dark:#3d111b!important;--azure:#eee2e5!important}
+body{background:#f1edef!important;color:#292329!important}
+header{background:linear-gradient(125deg,#3d111b 0%,#651725 58%,#873544 100%)!important}
+.logo,.num,.btn-green{background:linear-gradient(135deg,#873544,#651725)!important;color:#fff!important}
+.btn-blue,.btn-white,.btn-grey{background:#f0e5e8!important;color:#651725!important}
+.panel-head{background:linear-gradient(105deg,#f7edef,#f1edef 65%,#fff)!important;border-color:#dfd3d7!important}
+.panel-head h2,.field label,.week-title,.week-picker-wrap label{color:#651725!important}
+.metric{border-top-color:#873544!important}
+thead th{background:#eee2e5!important;color:#292329!important;border-top-color:#651725!important}
+th:first-child,td:first-child{background:#f5e9ec!important;border-left-color:#651725!important;color:#3d2027!important}
+.kg-cell{background:#f5eff1!important}.kg-input,.material-select,.field input,.field select{border-color:#d7c5cb!important}
+.summary th,.side .summary th{background:#651725!important;color:#fff!important}
+.summary .total td{background:#f0e2e6!important;border-top-color:#651725!important}
+.blend{border-color:#dfcbd0!important;background:linear-gradient(145deg,#fff6f7,#f2edef)!important}
+.notice{background:#f7edef!important;border-color:#dfcbd0!important;color:#651725!important}
+.week-toolbar{background:linear-gradient(120deg,#fff 0%,#f8f1f3 55%,#f1edef 100%)!important;border-color:#dfcbd0!important}
+.week-range{background:linear-gradient(110deg,#651725,#873544)!important;color:#fff!important}
+#productionTable thead th.dayhead,#productionTable thead th.dayhead *,#productionTable thead th.shifthead,#productionTable thead th.shifthead *,#productionTable thead tr:nth-child(2) th,#productionTable thead tr:nth-child(2) th *,#productionTable thead th.day-date{color:#fff!important}
+#productionTable thead th.dayhead,#productionTable thead th.shifthead,#productionTable thead tr:nth-child(2) th{background:linear-gradient(110deg,#651725,#873544)!important}
+</style>
+
+<style id="schermata-iniziale-periodo">
+#startScreen{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(145deg,#3a1018 0%,#651725 55%,#8b3545 100%);font-family:"Segoe UI",Arial,sans-serif;color:#29252a}
+#startScreen .start-card{width:min(680px,100%);background:#fff;border:1px solid #f0dfe2;border-radius:30px;padding:clamp(24px,5vw,48px);box-shadow:0 25px 80px #16060a55}
+#startScreen .start-kicker{display:inline-block;background:#f8e9ec;color:#651725;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+#startScreen h1{font-size:clamp(28px,5vw,42px);line-height:1.08;color:#651725;margin:18px 0 10px}
+#startScreen p{color:#6f6265;line-height:1.55;margin:0 0 25px}
+#startScreen .start-label{display:block;font-size:13px;font-weight:800;color:#4c3035;margin:0 0 8px}
+#startScreen input[type=date]{width:100%;padding:14px 15px;border:1px solid #dfc4ca;border-radius:14px;font:700 16px "Segoe UI",Arial,sans-serif;color:#39282c;background:#fff;margin-bottom:20px}
+#startScreen .period-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}
+#startScreen .period-option{display:block;border:2px solid #ead6da;border-radius:18px;padding:17px;background:#fff;cursor:pointer;transition:.15s}
+#startScreen .period-option:has(input:checked){border-color:#8b3545;background:#fff3f5;box-shadow:0 0 0 3px #8b35451a}
+#startScreen .period-option input{accent-color:#781f30;margin-right:7px}
+#startScreen .period-option strong{display:block;color:#651725;font-size:15px;margin-bottom:6px}
+#startScreen .period-option small{display:block;color:#79666a;line-height:1.4;margin-left:23px}
+#startScreen .start-continue{width:100%;border:0;border-radius:15px;padding:16px 20px;background:linear-gradient(110deg,#651725,#873544);color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px #65172530}
+#startScreen .start-continue:hover{filter:brightness(1.08)}
+#startScreen .start-foot{font-size:11px;text-align:center;color:#8a777b;margin:15px 0 0}
+@media(max-width:520px){#startScreen .period-options{grid-template-columns:1fr}#startScreen .start-card{border-radius:22px}}
+</style>
+
+<style id="tema-grigio-siderale-borgogna-finale">
+:root{--ink:#25262c;--muted:#666873;--bg:#e6e7eb;--paper:#f8f8fa;--line:#c8c9cf;--navy:#5a1828;--blue:#e1e2e6;--blue2:#f0f0f3;--green:#5a1828;--burgundy:#6c1d32;--burgundy-dark:#3a101c;--azure:#dedfe4;--shadow:0 4px 16px rgba(25,20,25,.08)}
+body{background:#e6e7eb!important;color:#25262c!important}header{background:linear-gradient(125deg,#24252b 0%,#41434c 62%,#6c1d32 100%)!important;color:#fff}header p{color:#f4e7eb!important}.logo{background:#e0e1e5!important;color:#5a1828!important}
+.btn-white{background:#e5e5e9!important;color:#5a1828!important}.btn-soft{background:#ffffff12!important;color:#fff!important;border-color:#ffffff70!important}.btn-blue,.btn-grey{background:#d9dade!important;color:#34353c!important}.btn-green,.num{background:#6c1d32!important;color:#fff!important}.btn-red{background:#45121f!important;color:#fff!important}
+.step,.metric,.panel{background:#f8f8fa!important;border-color:#c8c9cf!important}.metric{border-top-color:#6c1d32!important}.panel-head{background:linear-gradient(90deg,#e1e2e6,#f8f8fa)!important;border-bottom-color:#c8c9cf!important}.panel-head h2,.week-title{color:#6c1d32!important}
+thead th{background:#d5d6dc!important;color:#4c1725!important}thead tr:first-child th{border-top-color:#6c1d32!important}th,td{border-color:#9698a1!important}th:first-child,td:first-child{border-left-color:#6c1d32!important;background:#ececf0!important}.kg-cell{background:#eeeeF1!important}.kg-input{border-color:#a4a5ad!important}.panel-head .sub,.sub,.week-help{color:#666873!important}.blend{background:#eeeeF2!important;border-color:#c8c9cf!important}.notice{background:#f2e9ec!important;border-top-color:#d7b9c1!important;color:#5a1828!important}.archive-item{border-bottom-color:#d0d0d6!important}.archive-item strong{color:#292a30!important}.archive-item small{color:#666873!important}
+#startScreen{background:linear-gradient(145deg,#24252b 0%,#41434c 55%,#6c1d32 100%)!important}#startScreen .start-card{background:#f8f8fa!important;border-color:#d8c9ce!important}#startScreen .start-kicker{background:#f1e4e8!important;color:#6c1d32!important}#startScreen h1,#startScreen .period-option strong{color:#6c1d32!important}#startScreen .start-continue{background:linear-gradient(110deg,#4b1422,#7b263b)!important}#startScreen .period-option:has(input:checked){border-color:#6c1d32!important;background:#f8edf0!important}#startScreen .period-option input{accent-color:#6c1d32!important}
+</style>
+
+<style id="history-layout-main-theme">
+.history-page{display:block;min-width:0}
+.history-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 26px;margin:0 0 16px;border:1px solid #c8c9cf;border-radius:16px;background:linear-gradient(125deg,#24252b 0%,#41434c 62%,#6c1d32 100%);box-shadow:0 4px 16px rgba(25,20,25,.08);color:#fff}
+.history-kicker{display:inline-block;font-size:10px;font-weight:900;letter-spacing:1.7px;color:#f0dbe1;background:#6c1d32;border:1px solid #a66c7a;padding:6px 10px;border-radius:999px;margin-bottom:9px}
+.history-hero h2{font-size:25px;line-height:1.2;margin:0 0 7px;color:#fff}.history-hero p{margin:0;color:#eee6e9;font-size:13px;line-height:1.55;max-width:680px}
+.history-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.history-summary-card{background:#f8f8fa;border:1px solid #c8c9cf;border-top:3px solid #6c1d32;border-radius:12px;padding:16px 18px;box-shadow:0 4px 16px rgba(25,20,25,.05)}
+.history-summary-card small{display:block;font-size:11px;color:#666873;font-weight:800;text-transform:uppercase;letter-spacing:.5px}.history-summary-card strong{display:block;font-size:27px;color:#6c1d32;margin:5px 0}.history-summary-card span{font-size:11px;color:#666873}
+.history-section-heading{display:flex;align-items:end;justify-content:space-between;margin:8px 0 12px;padding:0 2px}.history-section-heading h3{margin:0;color:#6c1d32;font-size:18px}.history-section-heading p{margin:4px 0 0;color:#666873;font-size:12px}
+.history-weeks-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.history-week{background:#f8f8fa;border:1px solid #c8c9cf;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(25,20,25,.06);min-width:0}
+.history-week-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 17px;background:linear-gradient(90deg,#e1e2e6,#f8f8fa);border-bottom:1px solid #c8c9cf;border-top:3px solid #6c1d32}
+.history-week-head strong{display:block;color:#292a30;font-size:15px;line-height:1.4}.history-week-head small{display:block;margin-top:5px;color:#666873;font-size:12px;line-height:1.5}
+.history-status{flex-shrink:0;background:#eee3e7;color:#6c1d32;border:1px solid #d8c1c8;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:900;text-align:center;max-width:150px}
+.history-choices{display:grid;grid-template-columns:1fr;gap:9px;padding:14px}
+.history-choice{display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;padding:14px 15px;border:1px solid #c8c9cf;border-radius:10px;background:#fff;color:#292a30;cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
+.history-choice:hover:not(:disabled){border-color:#6c1d32;background:#f8edf0;transform:translateY(-1px)}.history-choice b{display:block;font-size:13px;color:#6c1d32}.history-choice small{display:block;color:#666873;font-size:11px;margin-top:4px}.history-choice:after{content:'›';font-size:25px;line-height:1;color:#6c1d32;font-weight:800}.history-choice:disabled{opacity:.4;cursor:not-allowed;background:#ececf0}.history-choice:disabled:after{content:'—';color:#85858d}
+.history-record-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}.history-delete-record{border:1px solid #d9b9c1;background:#f8edf0;color:#6c1d32;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:800;box-shadow:none}.history-delete-record:hover{background:#6c1d32;color:#fff}.history-weeks-grid .empty{grid-column:1/-1;background:#f8f8fa;border:1px dashed #b9bac2;border-radius:12px;padding:32px;text-align:center;color:#666873;line-height:1.7}
+@media(max-width:850px){.history-weeks-grid{grid-template-columns:1fr}.history-summary{grid-template-columns:1fr 1fr}.history-hero{align-items:flex-start;flex-direction:column}}
+@media(max-width:520px){.history-summary{grid-template-columns:1fr}.history-week-head{flex-direction:column}.history-status{max-width:none}.history-hero{padding:20px}.history-hero h2{font-size:22px}}
+</style>
+
+</head>
+<body>
+<section id="startScreen" aria-label="Imposta il periodo di produzione">
+ <div class="start-card">
+  <span class="start-kicker">Planner produzione · Materia prima</span>
+  <h1>Da dove partiamo?</h1>
+  <p>Seleziona la data di riferimento e il periodo di approvvigionamento. Premi <b>Continua</b> per aprire il planner di produzione già esistente.</p>
+  <label class="start-label" for="startDate">Data di riferimento</label>
+  <input id="startDate" type="date" required>
+  <span class="start-label">Scegli il periodo della materia prima</span>
+  <div class="period-options">
+   <label class="period-option"><strong><input type="radio" name="periodMode" value="lunven" checked> Da lunedì a venerdì</strong><small>Programmazione materia prima per i giorni lavorativi.</small></label>
+   <label class="period-option"><strong><input type="radio" name="periodMode" value="venlun"> Da venerdì a lunedì</strong><small>Programmazione a cavallo del fine settimana.</small></label>
+  </div>
+  <button type="button" id="startContinue" class="start-continue">CONTINUA →</button>
+  <div class="start-foot">Il planner e le sue funzioni restano disponibili nella schermata successiva.</div>
+ </div>
+</section>
+
+<header><div class="top">
+ <div class="brand"><div class="logo">▦</div><div><h1>Planner produzione</h1><p>Inserisci i kg, controlla i totali e consulta le settimane archiviate.</p></div></div>
+ <div class="actions"><button class="btn-white" id="showWork">Produzione</button><button class="btn-soft" id="showArchive">Archivio</button><button class="btn-soft" id="showHistory">Storico</button><button class="btn-white" id="archiveBtn">✓ Chiudi settimana e archivia</button><button class="btn-soft" id="exportBtn">⇩ Esporta CSV</button><button class="btn-soft" onclick="window.print()">⎙ Stampa</button><button class="btn-red" id="resetBtn">↻ Nuova settimana</button></div>
+</div></header>
+<main>
+ <div class="steps">
+  <div class="step"><span class="num">1</span><span><b>Seleziona il materiale</b> quando cambia</span></div>
+  <div class="step"><span class="num">2</span><span><b>Inserisci i kg</b> nel turno prodotto</span></div>
+  <div class="step"><span class="num">3</span><span><b>Il colore continua da solo</b> fino al prossimo cambio</span></div>
+ </div>
+ <section class="week-toolbar" aria-label="Selezione settimana di produzione">
+  <div><div class="week-title">📅 Programmazione per settimana</div><div class="week-help">Scegli una settimana dal calendario: il piano mostra i dati salvati per quelle date. La settimana iniziale è quella di sabato 31/10/2026.</div></div>
+  <div class="week-picker-wrap"><label for="weekPicker">Settimana da programmare</label><input id="weekPicker" type="week" aria-label="Seleziona la settimana di produzione"><span class="week-range" id="weekRange">Settimana corrente</span><button type="button" class="btn-grey mini" id="changePeriodBtn">↔ Cambia periodo</button></div>
+ </section>
+ <section class="metrics">
+  <div class="metric"><small>Produzione totale</small><strong id="allKg">0 kg</strong><span>Turni + dettagli aggiuntivi</span></div>
+  <div class="metric"><small>Turni con produzione</small><strong id="turnCount">0</strong><span>Solo turni con kg inseriti</span></div>
+  <div class="metric"><small>Materiali in uso</small><strong id="matCount">0</strong><span>Materiali con quantità</span></div>
+  <div class="metric"><small>Settimane archiviate</small><strong id="archiveCount">0</strong><span>Storico salvato su questo browser</span></div>
+ </section>
+ <div class="content-grid">
+  <div>
+   <section class="panel">
+    <div class="panel-head"><div><h2>Piano di produzione</h2><div class="sub">Ogni colonna è un turno. Se non scegli un nuovo materiale, resta quello precedente. Per le miscele usa MISCELA 1 o MISCELA 2 e configura le percentuali qui sotto.</div></div>
+     <div class="key" id="legend"></div></div>
+    <div class="table-wrap"><table id="productionTable"></table></div>
+    <div class="notice">Suggerimento: per cambiare materiale scegli il nuovo valore nella colonna del turno in cui inizia. Per interrompere la continuità scegli <b>STOP</b>. Il colore mostra sempre il materiale effettivo del turno.</div>
+   </section>
+   <section class="panel">
+    <div class="panel-head"><div><h2>Ricette miscele</h2><div class="sub">Imposta materiali e percentuali. Quando scegli MISCELA 1 o MISCELA 2, inserisci una sola volta i kg totali del turno: la ricetta li ripartisce tra i materiali senza duplicare il totale.</div></div></div>
+    <p class="blend-explain">Esempio: PE100 al 70% + RIGENERATO al 30%. Quando selezioni una miscela ti viene chiesto il totale kg prodotto nel turno. Quel valore viene conteggiato una sola volta nei totali della linea e nei kg totali; le percentuali ripartiscono automaticamente quel valore nel riepilogo materiali. La somma delle percentuali deve essere 100%.</p>
+    <div class="blends" id="blendGrid"></div>
+   </section>
+  </div>
+  <aside class="side">
+   <section class="panel"><div class="panel-head"><div><h2>Riepilogo materiali</h2><div class="sub">Totali aggiornati in automatico, miscele ripartite per percentuale</div></div></div><div class="table-wrap"><table class="summary" id="totalsTable"></table></div></section>
+   <section class="panel"><div class="panel-head"><div><h2>Produzione per linea</h2></div></div><div class="table-wrap"><table class="summary" id="lineTotals"></table></div></section>
+   
+  </aside>
+ </div>
+ <section id="archiveView" class="panel" hidden><div class="panel-head"><div><h2>Archivio delle settimane</h2><div class="sub">Qui trovi le settimane salvate. Puoi riaprirle o esportarle.</div></div><button class="btn-grey" id="backToWork">← Torna alla produzione</button></div><div class="archive-list" id="archiveList"></div></section>
+ <section id="historyView" class="history-page" hidden>
+  <div class="history-hero"><div><span class="history-kicker">ARCHIVIO PRODUZIONE</span><h2>Storico settimanale</h2><p>Seleziona una settimana e apri la vista che ti serve: tutti i dati insieme oppure uno dei due periodi.</p></div><button class="btn-grey" id="historyBackToWork">← Torna alla produzione</button></div>
+  <div class="history-summary"><div class="history-summary-card"><small>Settimane salvate</small><strong id="historyWeekCount">0</strong><span>Settimane presenti nello storico</span></div><div class="history-summary-card"><small>Periodi archiviati</small><strong id="historyPeriodCount">0</strong><span>Primo e secondo periodo</span></div><div class="history-summary-card"><small>Stato archivio</small><strong id="historyStatusCount">—</strong><span>Disponibilità dei dati</span></div></div>
+  <div class="history-section-heading"><div><h3>Seleziona la settimana</h3><p>Apri una selezione per vedere i dati archiviati nel layout completo del planner principale. Puoi anche eliminare singoli record.</p></div></div>
+  <div id="historySelectionList" class="history-weeks-grid"></div>
+ </section>
+ <footer><span id="archiveStorageText">Salvataggio locale nel browser di questo PC.</span> Apri Archivio per consultare le settimane salvate. Per condividere i dati con altri PC serve una versione con archivio centrale. La funzione “Nuova settimana” archivia i dati correnti prima di azzerare il piano.</footer>
+</main>
+<script>
+const MATERIALS=["PE80","PE100","PE100 RC","MISCELA 1","MISCELA 2","RIGENERATO","RIGENERATO 80070","PE112","STOP"];
+const PHYSICAL_MATERIALS=["PE80","PE100","PE100 RC","RIGENERATO","RIGENERATO 80070","PE112"];
+const MIX_KEYS=["MISCELA 1","MISCELA 2"];
+const COLOR={"PE80":"PE80","PE100":"PE100","PE100 RC":"PE100RC","MISCELA 1":"MISCELA","MISCELA 2":"MISCELA","RIGENERATO":"RIGENERATO","RIGENERATO 80070":"RIGENERATO80070","PE112":"PE112","STOP":"STOP"};
+const LINES=["Linea 1","Linea 2","Linea 3","Linea 4","Linea 6","Linea 7"];
+const SHIFTS=Array.from({length:24},(_,i)=>({n:i+1,day:["LUN","MAR","MER","GIO","VEN","SAB","DOM","EXTRA"][Math.floor(i/3)],turn:["Mattina","Pomeriggio","Notte"][i%3]}));
+const STATE_KEY="plannerProduzione_v3",HISTORY_KEY="plannerProduzione_storico_v3",WEEK_STATES_KEY="plannerProduzione_settimane_v1";
+function blankState(){return {materials:Array.from({length:6},()=>Array(24).fill("")),kgs:Array.from({length:6},()=>Array(24).fill("")),blends:[{material:"PE100",percent:"",extra:"RIGENERATO",extraPercent:""},{material:"PE80",percent:"",extra:"RIGENERATO",extraPercent:""}],weekLabel:""}}
+function normalizeBlendState(s){const defaults=blankState().blends;s.blends=(Array.isArray(s.blends)?s.blends:[]).slice(0,2).map((b,i)=>({material:b.material||defaults[i].material,percent:b.percent??"",extra:b.extra||defaults[i].extra,extraPercent:b.extraPercent??""}));while(s.blends.length<2)s.blends.push(defaults[s.blends.length]);return s}
+function cloneState(s){return JSON.parse(JSON.stringify(s))}
+function isoWeekString(date=new Date()){
+ const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
+ const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));const week=Math.ceil((((d-yearStart)/86400000)+1)/7);
+ return `${d.getUTCFullYear()}-W${String(week).padStart(2,"0")}`;
+}
+function mondayOfWeek(key){
+ const m=/^(\d{4})-W(\d{2})$/.exec(key||"");if(!m)return new Date();
+ const jan4=new Date(Number(m[1]),0,4);const day=jan4.getDay()||7;jan4.setDate(jan4.getDate()-day+1+(Number(m[2])-1)*7);jan4.setHours(12,0,0,0);return jan4;
+}
+function dateForWeekDay(key,dayOffset){const d=mondayOfWeek(key);d.setDate(d.getDate()+dayOffset);return d}
+function dateLabel(d){return d.toLocaleDateString("it-IT",{day:"2-digit",month:"2-digit"})}
+function weekLabelFor(key){const a=dateForWeekDay(key,0),b=dateForWeekDay(key,6);return `Settimana ${key.replace("-W"," · settimana ")} (${dateLabel(a)}–${dateLabel(b)})`}
+function loadWeekStates(){try{const v=JSON.parse(localStorage.getItem(WEEK_STATES_KEY));return v&&typeof v==="object"?v:{}}catch(e){return {}}}
+let activeWeek=isoWeekString(new Date());
+let weekStates=loadWeekStates();
+let state=loadState(),history=loadHistory();
+if(!weekStates[activeWeek]){state.weekLabel=state.weekLabel||weekLabelFor(activeWeek);weekStates[activeWeek]=cloneState(state)}else{state=cloneState(weekStates[activeWeek])}
+state=normalizeBlendState(state);state.weekLabel=state.weekLabel||weekLabelFor(activeWeek);
+function migrateState(s){if(!s||!s.materials||!s.kgs)return blankState();let n=blankState();for(let i=0;i<4;i++){n.materials[i]=(s.materials[i]||Array(24).fill("")).slice(0,24);n.kgs[i]=(s.kgs[i]||Array(24).fill("")).slice(0,24)}n.materials[4]=Array(24).fill("PE100 RC");n.materials[5]=Array(24).fill("RIGENERATO 80070");n.kgs[4]=(s.kgs[5]||Array(24).fill("")).slice(0,24);n.blends=s.blends||n.blends;n.weekLabel=s.weekLabel||"";return n}
+function loadState(){try{let s=JSON.parse(localStorage.getItem(STATE_KEY));if(s&&s.materials&&s.kgs)return s;let old=JSON.parse(localStorage.getItem("plannerProduzione_v2"));if(old&&old.materials&&old.kgs)return migrateState(old)}catch(e){}return blankState()}
+function loadHistory(){try{let h=JSON.parse(localStorage.getItem(HISTORY_KEY));if(Array.isArray(h))return h;let old=JSON.parse(localStorage.getItem("plannerProduzione_storico_v2"));if(Array.isArray(old))return old.map(a=>({...a,state:migrateState(a.state)}))}catch(e){}return []}
+function persist(){state.weekLabel=state.weekLabel||weekLabelFor(activeWeek);weekStates[activeWeek]=cloneState(state);localStorage.setItem(STATE_KEY,JSON.stringify(state));localStorage.setItem(HISTORY_KEY,JSON.stringify(history));localStorage.setItem(WEEK_STATES_KEY,JSON.stringify(weekStates));if(sharedDbEnabled)enqueueRemoteWeek(activeWeek,state);renderTotals();document.getElementById("archiveCount").textContent=history.length}
+function fmt(n){return (Number(n)||0).toLocaleString("it-IT",{maximumFractionDigits:2})}
+function cls(m){return COLOR[m]?"c-"+COLOR[m]:""}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function effective(l,s){if(l===4)return "PE100 RC";if(l===5)return "RIGENERATO 80070";let current="";for(let i=0;i<=s;i++){const m=state.materials[l][i];if(m==="STOP")current="";else if(m)current=m}return current}
+function renderLegend(){document.getElementById("legend").innerHTML=MATERIALS.filter(m=>m!=="STOP").map(m=>`<span class="chip"><i class="dot ${cls(m)}"></i>${m}</span>`).join("")}
+let selectedPeriodMode = "lunven";
+function periodShiftIndexes(mode=selectedPeriodMode){if(mode==="full")return Array.from({length:24},(_,i)=>i);return mode==="venlun"?Array.from({length:12},(_,i)=>i+12):Array.from({length:15},(_,i)=>i)}
+function periodDayGroups(mode=selectedPeriodMode){if(mode==="full")return [{name:"LUNEDÌ",dayOffset:0,indices:[0,1,2]},{name:"MARTEDÌ",dayOffset:1,indices:[3,4,5]},{name:"MERCOLEDÌ",dayOffset:2,indices:[6,7,8]},{name:"GIOVEDÌ",dayOffset:3,indices:[9,10,11]},{name:"VENERDÌ",dayOffset:4,indices:[12,13,14]},{name:"SABATO",dayOffset:5,indices:[15,16,17]},{name:"DOMENICA",dayOffset:6,indices:[18,19,20]},{name:"LUNEDÌ",dayOffset:7,indices:[21,22,23]}];if(mode==="venlun")return [{name:"VENERDÌ",dayOffset:4,indices:[12,13,14]},{name:"SABATO",dayOffset:5,indices:[15,16,17]},{name:"DOMENICA",dayOffset:6,indices:[18,19,20]},{name:"LUNEDÌ",dayOffset:7,indices:[21,22,23]}];return [{name:"LUNEDÌ",dayOffset:0,indices:[0,1,2]},{name:"MARTEDÌ",dayOffset:1,indices:[3,4,5]},{name:"MERCOLEDÌ",dayOffset:2,indices:[6,7,8]},{name:"GIOVEDÌ",dayOffset:3,indices:[9,10,11]},{name:"VENERDÌ",dayOffset:4,indices:[12,13,14]}]}
+function renderProduction(){
+ const dayGroups=periodDayGroups();
+ const visibleShifts=periodShiftIndexes();
+ let html='<thead><tr><th rowspan="2">Linea / dato</th>';
+ for(const group of dayGroups){
+  const dd=dateForWeekDay(activeWeek,group.dayOffset);
+  const isToday=dd.toDateString()===new Date().toDateString();
+  const dayDate=`<span class="day-date">${dateLabel(dd)}</span>`;
+  html+=`<th class="dayhead ${isToday?"today-head":""}" colspan="3">${group.name}${dayDate}</th>`;
+ }
+ html+='</tr><tr>';
+ for(const sh of visibleShifts)html+=`<th>${sh+1}<br><span style="font-weight:600">${SHIFTS[sh].turn}</span></th>`;
+ html+='</tr></thead><tbody>';
+ for(let l=0;l<6;l++){
+  const displayLine=LINES[l].replace("Linea ","");
+  html+=`<tr><td class="line-name">LINEA ${displayLine}<span>${l===4?"Materiale fisso: PE100 RC":l===5?"Materiale fisso: RIGENERATO 80070":"Materiale per turno"}</span></td>`;
+  for(const sh of visibleShifts){
+   let m=effective(l,sh),selected=state.materials[l][sh]||"";const fixed=l>=4;
+   html+=`<td class="mat-cell ${cls(m)}"><span class="mat-effective">${m||"—"}</span>${fixed?`<span class="inherited">FISSO</span>`:selected?`<span class="inherited">CAMBIO IMPOSTATO</span>`:`<span class="inherited">${m?"continua dal turno precedente":"nessun materiale"}</span>`}${fixed?"":`<select class="material-select" aria-label="Cambia materiale linea ${displayLine} turno ${sh+1}" data-line="${l}" data-shift="${sh}"><option value="">↳ Continua</option>${MATERIALS.map(x=>`<option value="${x}" ${selected===x?"selected":""}>${x==="STOP"?"STOP / interrompi":x}</option>`).join("")}</select>`}</td>`;
+  }
+  html+='</tr><tr><td class="line-name">KG INSERITI<span>Quantità prodotta</span></td>';
+  for(const sh of visibleShifts)html+=`<td class="kg-cell"><input class="kg-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" aria-label="Kg linea ${displayLine} turno ${sh+1}" data-kg-line="${l}" data-kg-shift="${sh}" value="${esc(state.kgs[l][sh])}"></td>`;
+  html+='</tr>';
+ }
+ html+='</tbody>';document.getElementById("productionTable").innerHTML=html;
+ document.querySelectorAll("select[data-line]").forEach(el=>el.addEventListener("change",e=>{
+  const line=+e.target.dataset.line,shift=+e.target.dataset.shift,chosen=e.target.value;
+  state.materials[line][shift]=chosen;
+  if(MIX_KEYS.includes(chosen)){
+   const current=state.kgs[line][shift]??"";
+   const answer=prompt(`Inserisci i KG TOTALI della ${chosen} per la linea ${line+1}, turno ${shift+1}. Questo totale sarà conteggiato una sola volta.`,current);
+   if(answer!==null){const clean=answer.trim().replace(",",".");if(clean===""||(!Number.isNaN(Number(clean))&&Number(clean)>=0))state.kgs[line][shift]=clean;}
+  }
+  persist();renderProduction();
+ }));
+ document.querySelectorAll("input[data-kg-line]").forEach(el=>{
+  const l=+el.dataset.kgLine,j=+el.dataset.kgShift,m=effectiveFor(state,l,j);
+  if(MIX_KEYS.includes(m)){el.placeholder="KG TOTALI";el.title="Kg totali della miscela: vengono contati una sola volta e ripartiti nel riepilogo materiali";}
+  el.addEventListener("input",e=>{state.kgs[+e.target.dataset.kgLine][+e.target.dataset.kgShift]=e.target.value;persist();});
+ });
+}
+function renderBlends(){
+ const g=document.getElementById("blendGrid");
+ g.innerHTML=state.blends.map((b,i)=>{
+   const p=Number(String(b.percent??"").replace(",","."))||0;
+   const q=Number(String(b.extraPercent??"").replace(",","."))||0;
+   const sum=p+q, valid=Math.abs(sum-100)<0.001;
+   return `<div class="blend"><h3>${i===0?"MISCELA 1":"MISCELA 2"}</h3><div class="fields">
+   <div class="field"><label>Materiale principale</label><select data-bmat="${i}">${PHYSICAL_MATERIALS.map(m=>`<option value="${m}" ${b.material===m?"selected":""}>${m}</option>`).join("")}</select></div>
+   <div class="field"><label>Percentuale materiale (%)</label><input type="number" min="0" max="100" step="1" data-bpct="${i}" value="${esc(b.percent)}" placeholder="es. 70"></div>
+   <div class="field"><label>Materiale secondario</label><select data-bextra="${i}">${PHYSICAL_MATERIALS.map(m=>`<option value="${m}" ${b.extra===m?"selected":""}>${m}</option>`).join("")}</select></div>
+   <div class="field"><label>Percentuale secondario (%)</label><input type="number" min="0" max="100" step="1" data-bxpct="${i}" value="${esc(b.extraPercent)}" placeholder="es. 30"></div>
+   <div class="blend-status ${valid?"ok":"warn"}" data-blend-status="${i}">${valid?`✓ Percentuali corrette: ${fmt(p)}% + ${fmt(q)}% = 100%`:`Somma attuale: ${fmt(sum)}%. Inserisci le percentuali fino a raggiungere 100%.`}</div>
+   </div></div>`;
+ }).join("");
+ g.querySelectorAll("[data-bmat]").forEach(e=>e.addEventListener("change",()=>{state.blends[+e.dataset.bmat].material=e.value;persist();renderBlends()}));
+ g.querySelectorAll("[data-bextra]").forEach(e=>e.addEventListener("change",()=>{state.blends[+e.dataset.bextra].extra=e.value;persist();renderBlends()}));
+ g.querySelectorAll("[data-bpct]").forEach(e=>e.addEventListener("input",()=>{state.blends[+e.dataset.bpct].percent=e.value;persist();updateBlendStatus(+e.dataset.bpct)}));
+ g.querySelectorAll("[data-bxpct]").forEach(e=>e.addEventListener("input",()=>{state.blends[+e.dataset.bxpct].extraPercent=e.value;persist();updateBlendStatus(+e.dataset.bxpct)}));
+}
+function updateBlendStatus(i){
+ const b=state.blends[i],p=Number(String(b.percent??"").replace(",","."))||0,q=Number(String(b.extraPercent??"").replace(",","."))||0,sum=p+q;
+ const el=document.querySelector(`[data-blend-status="${i}"]`);if(!el)return;
+ const valid=Math.abs(sum-100)<0.001;el.className="blend-status "+(valid?"ok":"warn");
+ el.textContent=valid?`✓ Percentuali corrette: ${fmt(p)}% + ${fmt(q)}% = 100%`:`Somma attuale: ${fmt(sum)}%. La ricetta non verrà ripartita nel riepilogo materiali finché la somma non sarà 100%.`;
+}
+function addMaterialKg(totals,used,material,kg){
+ if(kg>0&&material&&Object.prototype.hasOwnProperty.call(totals,material)){totals[material]=(totals[material]||0)+kg;used.add(material)}
+}
+function calculate(s){
+ let totals=Object.fromEntries(PHYSICAL_MATERIALS.map(m=>[m,0])),lineTotals=Array(6).fill(0),all=0,turns=0,used=new Set();
+ for(let l=0;l<6;l++)for(let j=0;j<24;j++){
+   let kg=Number(String(s.kgs[l][j]??"").replace(",","."))||0;
+   if(kg>0){
+     let m=effectiveFor(s,l,j);lineTotals[l]+=kg;all+=kg;turns++;
+     if(MIX_KEYS.includes(m)){
+       const recipe=(s.blends||[])[MIX_KEYS.indexOf(m)]||{};
+       const p=Math.max(0,Number(String(recipe.percent??"").replace(",","."))||0);
+       const q=Math.max(0,Number(String(recipe.extraPercent??"").replace(",","."))||0);
+       const sum=p+q;
+       if(Math.abs(sum-100)<0.001){addMaterialKg(totals,used,recipe.material,kg*p/100);addMaterialKg(totals,used,recipe.extra,kg*q/100)}
+     }else addMaterialKg(totals,used,m,kg);
+   }
+ }
+ return {totals,lineTotals,all,turns,used:used.size}
+}
+function effectiveFor(s,l,j){if(l===4)return "PE100 RC";if(l===5)return "RIGENERATO 80070";let cur="";for(let i=0;i<=j;i++){let m=s.materials[l][i];if(m==="STOP")cur="";else if(m)cur=m}return cur}
+function renderTotals(){
+ let r=calculate(state);document.getElementById("allKg").textContent=fmt(r.all)+" kg";document.getElementById("turnCount").textContent=r.turns;document.getElementById("matCount").textContent=r.used;document.getElementById("archiveCount").textContent=history.length;
+ let h='<thead><tr><th>Materiale</th><th>Kg totali</th></tr></thead><tbody>';for(let m of PHYSICAL_MATERIALS)h+=`<tr><td><i class="material-swatch ${cls(m)}"></i>${m}</td><td>${fmt(r.totals[m]||0)}</td></tr>`;h+=`<tr class="total"><td>TOTALE</td><td>${fmt(r.all)}</td></tr></tbody>`;document.getElementById("totalsTable").innerHTML=h;
+ let l='<thead><tr><th>Linea</th><th>Kg totali</th></tr></thead><tbody>';for(let i=0;i<6;i++)l+=`<tr><td>${LINES[i]}</td><td>${fmt(r.lineTotals[i])}</td></tr>`;l+=`<tr class="total"><td>TOTALE LINEE</td><td>${fmt(r.lineTotals.reduce((a,b)=>a+b,0))}</td></tr></tbody>`;document.getElementById("lineTotals").innerHTML=l;
+ renderHistory()
+}
+function archiveCurrent(){
+ const r=calculate(state);const hasData=r.all>0||state.materials.some(row=>row.some(Boolean))||state.kgs.some(row=>row.some(v=>String(v||"").trim()!==""));if(!hasData)return false;
+ const weekKey=activeWeek,mode=selectedPeriodMode||"lunven";
+ const existing=history.find(a=>a.weekKey===weekKey&&a.periodMode===mode);
+ if(existing){
+  const merged=cloneState(existing.state||blankState());
+  const slots=periodShiftIndexes(mode);
+  for(let l=0;l<6;l++)for(const i of slots){if(state.materials[l][i])merged.materials[l][i]=state.materials[l][i];if(String(state.kgs[l][i]??"").trim()!=="")merged.kgs[l][i]=state.kgs[l][i];}
+  merged.blends=cloneState(state.blends||merged.blends);merged.weekLabel=weekLabelFor(weekKey);
+  const mr=calculate(merged);existing.state=merged;existing.total=mr.all;existing.turns=mr.turns;existing.materials=mr.totals;existing.label=weekLabelFor(weekKey);existing.date=new Date().toISOString();existing.periodMode=mode;
+ }else{
+  const snap=cloneState(state);snap.weekKey=weekKey;snap.weekLabel=weekLabelFor(weekKey);
+  history.unshift({id:Date.now(),date:new Date().toISOString(),weekKey,label:weekLabelFor(weekKey),total:r.all,turns:r.turns,materials:r.totals,state:snap,periodMode:mode});
+ }
+ history=history.slice(0,200);return true
+}
+function renderHistory(){const box=document.getElementById("archiveList");if(!history.length){box.innerHTML='<div class="empty">Ancora nessuna settimana archiviata.<br>Premi “Chiudi settimana e archivia” per salvare il primo storico.</div>';return}
+ box.innerHTML=history.map(a=>`<div class="archive-item"><div><strong>${esc(a.label)} · ${a.periodMode==="venlun"?"Secondo periodo (ven→lun)":a.periodMode==="lunven"?"Primo periodo (lun→ven)":"Settimana completa"}</strong><small>${new Date(a.date).toLocaleDateString("it-IT")} · ${fmt(a.total)} kg · ${a.turns} turni</small></div><div class="archive-actions"><button class="btn-grey mini" data-view="${a.id}">Apri</button><button class="btn-grey mini" data-csv="${a.id}">CSV</button><button class="btn-grey mini" data-del="${a.id}" title="Elimina archivio">×</button></div></div>`).join("");
+ box.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{let a=history.find(x=>x.id===+b.dataset.view);if(a&&confirm("Aprire questa settimana nello spazio di lavoro? Prima salva o archivia la settimana corrente se ti serve conservarla.")){weekStates[activeWeek]=cloneState(state);activeWeek=a.weekKey||activeWeek;document.getElementById("weekPicker").value=activeWeek;state=normalizeBlendState(cloneState(a.state));state.weekLabel=a.label||weekLabelFor(activeWeek);weekStates[activeWeek]=cloneState(state);persist();updateWeekDisplay();renderProduction();renderBlends();window.scrollTo({top:0,behavior:"smooth"})}});
+ box.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>{let a=history.find(x=>x.id===+b.dataset.csv);if(a)exportCSV(a.state,"storico_"+new Date(a.date).toISOString().slice(0,10)+".csv")});
+ box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(confirm("Eliminare questa settimana dallo storico?")){history=history.filter(x=>x.id!==+b.dataset.del);persist();deleteRemoteHistory(b.dataset.del)}});
+}
+function buildCompleteWeekState(weekKey,items){
+ const base=blankState();base.weekKey=weekKey;base.weekLabel=weekLabelFor(weekKey);
+ const first=items.find(x=>x.periodMode==="lunven"),second=items.find(x=>x.periodMode==="venlun");
+ const legacy=items.find(x=>!x.periodMode);if(!first&&!second&&legacy&&legacy.state)return normalizeBlendState(cloneState(legacy.state));
+ const sources=[{item:first,slots:periodShiftIndexes("lunven")},{item:second,slots:periodShiftIndexes("venlun")}];
+ for(const src of sources){if(!src.item||!src.item.state)continue;for(let l=0;l<6;l++)for(const i of src.slots){const v=src.item.state.materials?.[l]?.[i];const kg=src.item.state.kgs?.[l]?.[i];if(v)base.materials[l][i]=v;if(String(kg??"").trim()!=="")base.kgs[l][i]=kg;}base.blends=cloneState(src.item.state.blends||base.blends);}
+ return normalizeBlendState(base)
+}
+function renderHistorySelections(){
+ const box=document.getElementById("historySelectionList");
+ const weekCount=new Set(history.map(x=>x.weekKey||"senza-settimana")).size;
+ const periodCount=history.filter(x=>x.periodMode==="lunven"||x.periodMode==="venlun").length;
+ const completeCount=[...new Set(history.map(x=>x.weekKey||"senza-settimana"))].filter(k=>{const a=history.filter(x=>(x.weekKey||"senza-settimana")===k);return a.some(x=>x.periodMode==="lunven")&&a.some(x=>x.periodMode==="venlun")}).length;
+ document.getElementById("historyWeekCount").textContent=weekCount;
+ document.getElementById("historyPeriodCount").textContent=periodCount;
+ document.getElementById("historyStatusCount").textContent=history.length?(completeCount+" complete") : "Vuoto";
+ if(!history.length){box.innerHTML='<div class="empty">Nessuna settimana nello storico.<br>Apri Produzione e premi “Chiudi settimana e archivia” per salvare il periodo corrente.</div>';return;}
+ const groups=new Map();for(const item of history){const key=item.weekKey||"senza-settimana";if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item)}
+ box.innerHTML=[...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([key,items])=>{
+  const full=buildCompleteWeekState(key,items);const total=calculate(full).all;
+  const first=items.find(x=>x.periodMode==="lunven"),second=items.find(x=>x.periodMode==="venlun");
+  const legacy=items.find(x=>!x.periodMode);const date=(items[0]?.date?new Date(items[0].date).toLocaleDateString("it-IT"):"");
+  const deletes = [
+   ...(first ? [`<button class="history-delete-record" data-history-del="${first.id}">Elimina record · Primo periodo</button>`] : []),
+   ...(second ? [`<button class="history-delete-record" data-history-del="${second.id}">Elimina record · Secondo periodo</button>`] : []),
+   ...(!first&&!second&&legacy ? [`<button class="history-delete-record" data-history-del="${legacy.id}">Elimina record archiviato</button>`] : [])
+  ].join("");
+  return `<div class="history-week"><div class="history-week-head"><div><strong>${esc(weekLabelFor(key))}</strong><small>${date} · ${fmt(total)} kg nella settimana completa</small></div><span class="history-status">${first&&second?"Entrambi i periodi archiviati":first||second?"Un periodo archiviato":"Storico precedente"}</span></div><div class="history-choices"><button class="history-choice" data-history-full="${esc(key)}"><b>Settimana completa</b><small>Tutti i dati uniti dei due periodi</small></button><button class="history-choice" data-history-first="${esc(key)}" ${!(first||legacy)?"disabled":""}><b>Primo periodo</b><small>Lunedì → venerdì</small></button><button class="history-choice" data-history-second="${esc(key)}" ${!(second||legacy)?"disabled":""}><b>Secondo periodo</b><small>Venerdì → lunedì</small></button></div>${deletes?`<div class="history-record-actions">${deletes}</div>`:""}</div>`
+ }).join("");
+ box.querySelectorAll("[data-history-full]").forEach(btn=>btn.onclick=()=>openHistorySelection(btn.dataset.historyFull,"full"));
+ box.querySelectorAll("[data-history-first]").forEach(btn=>btn.onclick=()=>openHistorySelection(btn.dataset.historyFirst,"lunven"));
+ box.querySelectorAll("[data-history-second]").forEach(btn=>btn.onclick=()=>openHistorySelection(btn.dataset.historySecond,"venlun"));
+ box.querySelectorAll("[data-history-del]").forEach(btn=>btn.onclick=()=>{
+  const id=Number(btn.dataset.historyDel);const record=history.find(x=>x.id===id);if(!record)return;
+  const label=record.periodMode==="lunven"?"il record del primo periodo (lunedì-venerdì)":record.periodMode==="venlun"?"il record del secondo periodo (venerdì-lunedì)":"questo record archiviato";
+  if(!confirm(`Vuoi eliminare ${label} della settimana ${record.label||weekLabelFor(record.weekKey||activeWeek)}? L'operazione non si può annullare.`))return;
+  history=history.filter(x=>x.id!==id);persist();renderHistorySelections();renderHistory();
+ });
+}
+function openHistorySelection(key,mode){
+ const items=history.filter(x=>(x.weekKey||"")===key);let chosenState,chosenMode=mode;
+ if(mode==="full")chosenState=buildCompleteWeekState(key,items);
+ else {let item=items.find(x=>x.periodMode===mode);if(!item)item=items.find(x=>!x.periodMode);if(!item)return;chosenState=cloneState(item.state);}
+ weekStates[activeWeek]=cloneState(state);activeWeek=key;document.getElementById("weekPicker").value=key;selectedPeriodMode=chosenMode;
+ state=normalizeBlendState(cloneState(chosenState));state.weekLabel=weekLabelFor(key);weekStates[key]=cloneState(state);persist();updateWeekDisplay();renderProduction();renderBlends();
+ const title=document.querySelector(".week-title");if(title)title.textContent=mode==="full"?"📅 Storico · settimana completa":mode==="lunven"?"📅 Storico · primo periodo":"📅 Storico · secondo periodo";
+ showPage("work");
+}
+
+function exportCSV(s=state,filename="piano_produzione_settimanale.csv"){
+ const rows=[["Settimana",s.weekLabel||weekLabelFor(activeWeek)],[],["Linea","Turno","Giorno","Data","Fascia","Materiale effettivo","Cambio inserito","Kg"]];
+ for(let l=0;l<6;l++)for(let j=0;j<24;j++)rows.push([LINES[l],j+1,SHIFTS[j].day,j<21?dateLabel(dateForWeekDay(s.weekKey||activeWeek,Math.floor(j/3))):"EXTRA",SHIFTS[j].turn,effectiveFor(s,l,j),l>=4?"FISSO":s.materials[l][j],s.kgs[l][j]]);
+ rows.push([],["Ricette miscele"],["Ricetta","Materiale principale","Percentuale","Materiale secondario","Percentuale"]);(s.blends||[]).forEach((b,i)=>rows.push(["MISCELA "+(i+1),b.material,b.percent+"%",b.extra,b.extraPercent+"%"]));
+ let r=calculate(s);rows.push([],["Riepilogo materiale","Kg"]);Object.keys(r.totals).forEach(m=>rows.push([m,r.totals[m]]));rows.push(["TOTALE",r.all]);
+ const csv="\ufeff"+rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
+}
+document.getElementById("archiveBtn").onclick=()=>{if(!confirm("Archiviare la settimana corrente nello storico? I dati resteranno nel piano e potrai continuare a modificarli."))return;const added=archiveCurrent();if(added){persist();uploadRemoteHistory(history.find(a=>a.weekKey===activeWeek&&a.periodMode===selectedPeriodMode));alert("Settimana salvata nello storico. Puoi iniziare una nuova settimana quando vuoi.")}else alert("Non ci sono ancora dati da archiviare.")};
+document.getElementById("resetBtn").onclick=()=>{if(!confirm("Vuoi iniziare una nuova settimana? Se ci sono dati, verranno prima salvati nello storico."))return;const added=archiveCurrent();if(added)uploadRemoteHistory(history.find(a=>a.weekKey===activeWeek&&a.periodMode===selectedPeriodMode));state=blankState();persist();renderProduction();renderBlends();alert(added?"Settimana archiviata e piano azzerato.":"Piano azzerato: non c'erano dati da archiviare.")};
+document.getElementById("exportBtn").onclick=()=>exportCSV();
+function showPage(page){document.querySelector(".steps").hidden=page!=="work";document.querySelector(".week-toolbar").hidden=page!=="work";document.querySelector(".metrics").hidden=page!=="work";document.querySelector(".content-grid").hidden=page!=="work";document.getElementById("archiveView").hidden=page!=="archive";document.getElementById("historyView").hidden=page!=="history";document.getElementById("showWork").className=page==="work"?"btn-white":"btn-soft";document.getElementById("showArchive").className=page==="archive"?"btn-white":"btn-soft";document.getElementById("showHistory").className=page==="history"?"btn-white":"btn-soft";if(page==="archive")renderHistory();if(page==="history")renderHistorySelections();if(sharedDbEnabled&&(page==="archive"||page==="history"))refreshRemoteHistory();window.scrollTo({top:0,behavior:"smooth"})}
+document.getElementById("showWork").onclick=()=>showPage("work");document.getElementById("showArchive").onclick=()=>showPage("archive");document.getElementById("showHistory").onclick=()=>showPage("history");document.getElementById("backToWork").onclick=()=>showPage("work");document.getElementById("historyBackToWork").onclick=()=>showPage("work");
+document.getElementById("changePeriodBtn").onclick=()=>{selectedPeriodMode=selectedPeriodMode==="lunven"?"venlun":"lunven";try{const saved=JSON.parse(localStorage.getItem("plannerMateriaPrimaPeriodo"))||{};saved.mode=selectedPeriodMode;saved.week=activeWeek;localStorage.setItem("plannerMateriaPrimaPeriodo",JSON.stringify(saved));}catch(e){}const title=document.querySelector(".week-title"),help=document.querySelector(".week-help"),range=document.getElementById("weekRange");if(title)title.textContent=selectedPeriodMode==="lunven"?"📅 Programmazione · lunedì → venerdì":"📅 Programmazione · venerdì → lunedì";if(help)help.textContent=selectedPeriodMode==="lunven"?"Visualizzati i turni da lunedì a venerdì. Archiviando entrambi i periodi, lo storico li riunisce in una settimana completa.":"Visualizzati i turni da venerdì a lunedì. Archiviando entrambi i periodi, lo storico li riunisce in una settimana completa.";if(range){range.dataset.rawMaterialPeriod=selectedPeriodMode;range.textContent=(selectedPeriodMode==="lunven"?"Periodo: lunedì → venerdì · ":"Periodo: venerdì → lunedì · ")+weekLabelFor(activeWeek);}renderProduction();};
+function updateWeekDisplay(){
+ const picker=document.getElementById("weekPicker");if(picker.value!==activeWeek)picker.value=activeWeek;
+ document.getElementById("weekRange").textContent=weekLabelFor(activeWeek);
+ document.title="Planner produzione · "+weekLabelFor(activeWeek);
+}
+document.getElementById("weekPicker").addEventListener("change",e=>{
+ const selected=e.target.value;if(!/^\d{4}-W\d{2}$/.test(selected))return;
+ if(selected===activeWeek){updateWeekDisplay();return}
+ weekStates[activeWeek]=cloneState(state);localStorage.setItem(WEEK_STATES_KEY,JSON.stringify(weekStates));
+ activeWeek=selected;
+ if(weekStates[activeWeek])state=cloneState(weekStates[activeWeek]);
+ else state=blankState();
+ state=normalizeBlendState(state);state.weekLabel=state.weekLabel||weekLabelFor(activeWeek);
+ weekStates[activeWeek]=cloneState(state);
+ localStorage.setItem(STATE_KEY,JSON.stringify(state));localStorage.setItem(WEEK_STATES_KEY,JSON.stringify(weekStates));
+ updateWeekDisplay();renderProduction();renderBlends();renderTotals();window.scrollTo({top:0,behavior:"smooth"});
+});
+renderLegend();renderProduction();renderBlends();renderTotals();
+updateWeekDisplay();
+
+// Schermata iniziale: selezione data e finestra di materia prima
+function startIsoWeek(date){
+ const d=new Date(date+'T12:00:00'); if(Number.isNaN(d.getTime())) return isoWeekString();
+ const day=d.getDay()||7; d.setDate(d.getDate()+4-day);
+ const yearStart=new Date(d.getFullYear(),0,1); const week=Math.ceil((((d-yearStart)/86400000)+1)/7);
+ return d.getFullYear()+'-W'+String(week).padStart(2,'0');
+}
+(function initStartScreen(){
+ try{const saved=JSON.parse(localStorage.getItem('plannerMateriaPrimaPeriodo'));if(saved&&saved.mode)selectedPeriodMode=saved.mode;}catch(e){}
+ const modeRadio=document.querySelector(`input[name="periodMode"][value="${selectedPeriodMode}"]`);if(modeRadio)modeRadio.checked=true;
+ const dateInput=document.getElementById('startDate');
+ const now=new Date(); const localDate=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+ dateInput.value=localDate;
+ document.getElementById('startContinue').addEventListener('click',()=>{
+  if(!dateInput.value){dateInput.focus();return;}
+  const mode=document.querySelector('input[name="periodMode"]:checked').value;
+  const selectedWeek=startIsoWeek(dateInput.value);
+  const picker=document.getElementById('weekPicker');
+  if(picker && picker.value!==selectedWeek){picker.value=selectedWeek;picker.dispatchEvent(new Event('change',{bubbles:true}));}
+  const startScreen=document.getElementById('startScreen');
+  startScreen.style.opacity='0'; startScreen.style.transition='opacity .2s ease';
+  setTimeout(()=>startScreen.remove(),210);
+  const range=document.getElementById('weekRange');
+  if(range){range.dataset.rawMaterialPeriod=mode;range.textContent=(mode==='lunven'?'Periodo: lunedì → venerdì · ':'Periodo: venerdì → lunedì · ')+weekLabelFor(selectedWeek);range.title=mode==='lunven'?'Periodo materia prima: da lunedì a venerdì':'Periodo materia prima: da venerdì a lunedì';}
+  try{localStorage.setItem('plannerMateriaPrimaPeriodo',JSON.stringify({date:dateInput.value,mode,week:selectedWeek}));}catch(e){}
+  const toolbarTitle=document.querySelector('.week-title');if(toolbarTitle)toolbarTitle.textContent=mode==='lunven'?'📅 Programmazione · lunedì → venerdì':'📅 Programmazione · venerdì → lunedì';
+  const help=document.querySelector('.week-help');if(help)help.textContent=mode==='lunven'?'Visualizzati i turni da lunedì a venerdì. Archiviando entrambi i periodi, lo storico li riunisce in una settimana completa.':'Visualizzati i turni da venerdì a lunedì. Archiviando entrambi i periodi, lo storico li riunisce in una settimana completa.';
+  renderProduction();
+ });
+})();
+
+
+let sharedDbEnabled=false;
+let remoteBases={},remoteRevisions={},remoteSaveQueue=Promise.resolve();
+function setSharedStatus(text){const el=document.getElementById("archiveStorageText");if(el)el.textContent=text}
+async function sharedRequest(path,options={}){const response=await fetch(path,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});const data=await response.json();if(!response.ok)throw new Error(data.error||("HTTP "+response.status));return data}
+function enqueueRemoteWeek(week,snapshot){
+ const saved=cloneState(snapshot);
+ remoteSaveQueue=remoteSaveQueue.catch(()=>{}).then(async()=>{
+  const base=cloneState(remoteBases[week]||blankState());
+  const result=await sharedRequest("/api/weeks/"+encodeURIComponent(week),{method:"PUT",body:JSON.stringify({baseState:base,state:saved})});
+  remoteBases[week]=cloneState(result.state);remoteRevisions[week]=result.revision;setSharedStatus("Database condiviso collegato: "+week);
+ }).catch(()=>setSharedStatus("Database non raggiungibile: i dati restano salvati in questo browser."));
+}
+async function uploadRemoteHistory(record){if(!sharedDbEnabled||!record)return;try{await sharedRequest("/api/history/"+encodeURIComponent(record.id),{method:"PUT",body:JSON.stringify({record})})}catch(e){setSharedStatus("Database non raggiungibile: lo storico resta in questo browser.")}}
+async function deleteRemoteHistory(id){if(!sharedDbEnabled)return;try{await sharedRequest("/api/history/"+encodeURIComponent(id),{method:"DELETE"})}catch(e){setSharedStatus("Database non raggiungibile: lo storico resta in questo browser.")}}
+async function refreshRemoteHistory(){try{const data=await sharedRequest("/api/store");history=data.history||[];localStorage.setItem(HISTORY_KEY,JSON.stringify(history));renderHistory();renderHistorySelections()}catch(e){}}
+async function connectSharedDatabase(){
+ if(location.protocol==="file:"){setSharedStatus("Salvataggio locale nel browser: avvia il planner dal server per condividere i dati.");return}
+ try{
+  const clientKey="plannerSharedClientId";
+  let clientId=localStorage.getItem(clientKey);
+  if(!clientId){clientId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());localStorage.setItem(clientKey,clientId)}
+  weekStates[activeWeek]=cloneState(state);
+  await sharedRequest("/api/import",{method:"POST",body:JSON.stringify({clientId,weeks:weekStates,history})});
+  const data=await sharedRequest("/api/store");
+  weekStates={};
+  for(const [key,value] of Object.entries(data.weeks||{})){weekStates[key]=cloneState(value.state);remoteBases[key]=cloneState(value.state);remoteRevisions[key]=value.revision}
+  history=data.history||[];
+  state=normalizeBlendState(cloneState(weekStates[activeWeek]||blankState()));
+  state.weekLabel=state.weekLabel||weekLabelFor(activeWeek);weekStates[activeWeek]=cloneState(state);
+  localStorage.setItem(STATE_KEY,JSON.stringify(state));localStorage.setItem(HISTORY_KEY,JSON.stringify(history));localStorage.setItem(WEEK_STATES_KEY,JSON.stringify(weekStates));
+  sharedDbEnabled=true;setSharedStatus("Database condiviso collegato.");
+  updateWeekDisplay();renderProduction();renderBlends();renderTotals();
+ }catch(e){sharedDbEnabled=false;setSharedStatus("Server non raggiungibile: salvataggio locale su questo browser.")}
+}
+connectSharedDatabase();
+
+</script><style id="period-layout-final">.week-picker-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.week-picker-wrap label{width:100%}.week-range{display:block;flex-basis:100%;font-size:12px;color:#5a1828;font-weight:800}.day-date{display:block;font-size:11px;font-weight:800;color:#5a1828;margin-top:2px}.today-head{box-shadow:inset 0 -3px #6c1d32}#changePeriodBtn{margin-top:5px}</style><style id="colori-materiali-layout-giornaliero">
+.c-PE80{background:#1769aa!important;color:#fff!important}.c-PE100{background:#28a745!important;color:#fff!important}.c-PE100RC{background:#d9a514!important;color:#282018!important}.c-MISCELA{background:#7e57c2!important;color:#fff!important}.c-RIGENERATO{background:#f28c28!important;color:#2c1c0c!important}.c-RIGENERATO80070{background:#bd4d16!important;color:#fff!important}.c-PE112{background:#163b8c!important;color:#fff!important}.c-STOP{background:#45484f!important;color:#fff!important}
+.c-PE80 .material-select{background:#12588f!important;color:#fff!important;border-color:#0d4775!important}.c-PE100 .material-select{background:#188638!important;color:#fff!important;border-color:#116b2b!important}.c-PE100RC .material-select{background:#f1cf56!important;color:#30250b!important;border-color:#ad8310!important}.c-MISCELA .material-select{background:#6c45a9!important;color:#fff!important;border-color:#50317f!important}.c-RIGENERATO .material-select{background:#e97a13!important;color:#241608!important;border-color:#b85b08!important}.c-RIGENERATO80070 .material-select{background:#a83e10!important;color:#fff!important;border-color:#7d2a09!important}.c-PE112 .material-select{background:#102f70!important;color:#fff!important;border-color:#0b2355!important}.c-STOP .material-select{background:#34373d!important;color:#fff!important;border-color:#222429!important}
+</style>
+<style id="storico-terza-pagina">
+.history-week{border:1px solid #c8c9cf;border-left:4px solid #6c1d32;border-radius:10px;padding:14px;margin:12px 0;background:#f8f8fa}.history-week-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}.history-week-head strong{display:block;color:#5a1828;font-size:16px}.history-week-head small{display:block;color:#666873;margin-top:4px}.history-status{font-size:11px;font-weight:800;background:#e5e5e9;color:#5a1828;border-radius:20px;padding:6px 10px}.history-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.history-choice{border:1px solid #c8c9cf;border-radius:8px;background:#e6e7eb;padding:14px;text-align:left;cursor:pointer;color:#33343b}.history-choice b{display:block;color:#6c1d32;font-size:14px;margin-bottom:5px}.history-choice small{display:block;color:#666873;font-size:12px}.history-choice:hover:not(:disabled){background:#f2e9ec;border-color:#6c1d32}.history-choice:disabled{opacity:.4;cursor:not-allowed}@media(max-width:700px){.history-choices{grid-template-columns:1fr}}
+</style>
+<style id="history-final-adjustments">#historyView[hidden]{display:none!important}#historyView:not([hidden]){display:block!important}.history-hero .btn-grey{white-space:nowrap}@media(min-width:1200px){.history-weeks-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
+</body></html>
+/* Tema ispirato al riferimento Quality Control: verde petrolio, smeraldo e fondi chiari */
+:root{--ink:#20352e;--muted:#71827b;--bg:#edf3ef;--paper:#fff;--line:#d7e4dc;--navy:#1d493c;--blue:#dcefe5;--blue2:#f3f8f5;--green:#258563;--burgundy:#1d493c;--burgundy-dark:#17382f;--azure:#e0eee7;--shadow:0 4px 16px rgba(24,62,47,.06)}
+body{background:#edf3ef;color:#20352e}
+header{background:linear-gradient(125deg,#19352c 0%,#214c3e 62%,#2c7559 100%);box-shadow:0 5px 18px rgba(22,54,42,.13)}
+header p{color:#dcebe3}.logo{background:#2c8a68;color:#fff}
+.btn-white{background:#e6f2eb;color:#1b4939}.btn-soft{background:#ffffff14;color:white;border:1px solid #ffffff70}.btn-blue{background:#dcefe5;color:#214b3b}.btn-green{background:#258563;color:white}.btn-red{background:#17382f;color:white}.btn-grey{background:#e4ece7;color:#29483b}
+.step{border-color:#d7e4dc}.num{background:#258563;color:white}
+.metric{border-color:#d7e4dc;border-top-color:#31966e}.metric strong{color:#20352e}
+.panel{border-color:#d8e4dd;box-shadow:0 3px 12px rgba(24,62,47,.05)}.panel-head{background:linear-gradient(90deg,#e8f4ed,#fff);border-bottom-color:#d7e4dc}.panel-head h2{color:#237d5b}
+.table-wrap{background:#f4f8f5}
+thead th{background:#dcefe5;color:#214638;border-top-color:#258563}thead tr:first-child th{border-top-color:#258563}
+th:first-child,td:first-child{background:#e7f1eb;border-left-color:#258563;color:#203c31}
+#productionTable tbody tr:nth-child(4n+1) td{border-top-color:#258563}#productionTable tbody tr:nth-child(4n+2) td{border-bottom-color:#c2d4c9}#productionTable tbody tr:nth-child(4n) td{border-bottom-color:#258563}
+th,td{border-color:#cbd9d0}.line-name span{color:#62776c}.inherited{color:#52665a}
+.kg-cell{background:#f0f6f2}.kg-input{border-color:#cbdcd1}.material-select{border-color:#bdcec3}
+.summary .total td{background:#e1f1e8;border-top-color:#258563}
+.blend{border-color:#d4e4da;background:linear-gradient(145deg,#eff7f2,#fff)}.field label{color:#61766a}.field input,.field select{border-color:#cbdcd1}
+.archive-item{border-bottom-color:#d8e4dc}.archive-item strong{color:#20352e}.archive-item small{color:#71827b}
+.notice{background:#e9f5ee;border-top-color:#d2e6da;color:#245b43}
+/* Giorni, date e turni: testo bianco su verde petrolio */
+#productionTable thead th.dayhead,#productionTable thead th.dayhead *,#productionTable thead th.shifthead,#productionTable thead th.shifthead *,#productionTable thead th.dayhead .day-date{color:#fff!important}
+#productionTable thead th.dayhead,#productionTable thead th.shifthead{background:linear-gradient(110deg,#1b4739,#267255)!important}
+#productionTable thead th.dayhead .day-date{opacity:1!important}
+
+<style id="fix-testi-bianchi-giorni-turni">
+/* Forza il bianco su nomi dei giorni, date e tutte le intestazioni dei turni */
+#productionTable thead tr:first-child th.dayhead,
+#productionTable thead tr:first-child th.dayhead *,
+#productionTable thead tr:nth-child(2) th,
+#productionTable thead tr:nth-child(2) th *,
+#productionTable thead th.day-date { color: #fff !important; }
+#productionTable thead tr:first-child th.dayhead,
+#productionTable thead tr:nth-child(2) th {
+  background: linear-gradient(110deg, #651725, #873544) !important;
+}
+#productionTable thead th.day-date { opacity: 1 !important; }
+</style>
+
+<style id="tema-rosso-scuro-no-verde">
+/* Tema rosso scuro: elimina il verde dal tema generale, mantenendo bianchi giorni, date e turni */
+:root{--ink:#292329;--muted:#71676b;--bg:#f1edef;--paper:#fff;--line:#dfd3d7;--navy:#651725;--blue:#f0e5e8;--blue2:#f8f4f5;--green:#873544;--burgundy:#651725;--burgundy-dark:#3d111b;--azure:#eee2e5;--shadow:0 4px 16px rgba(65,17,29,.07)}
+body{background:radial-gradient(ellipse at 8% 0%,#faf2f4 0,transparent 34%),radial-gradient(ellipse at 100% 18%,#f1edef 0,transparent 30%),#f1edef;color:#292329}
+header{background:linear-gradient(125deg,#3d111b 0%,#651725 58%,#873544 100%);box-shadow:0 5px 18px rgba(65,17,29,.16)}
+header p{color:#f4e8eb}.logo{background:linear-gradient(135deg,#873544,#651725);color:#fff}
+.btn-white{background:#f5e9ec;color:#651725}.btn-green{background:#873544;color:#fff}.btn-red{background:#3d111b;color:#fff}.btn-blue{background:#eee2e5;color:#4b2029}.btn-grey{background:#eee8ea;color:#3d3034}
+.num{background:#873544;color:#fff}.metric{border-color:#dfd3d7;border-top-color:#873544;background:linear-gradient(145deg,#fff 45%,#f8edef)}
+.panel{border-color:#dfd3d7}.panel-head{background:linear-gradient(105deg,#f7edef,#f1edef 65%,#fff);border-bottom-color:#dfd3d7}.panel-head h2{color:#651725}
+.table-wrap{background:#f8f5f6}thead th{background:#eee2e5;color:#292329;border-top-color:#651725}thead tr:first-child th{border-top-color:#651725}
+th:first-child,td:first-child{background:#f5e9ec;border-left-color:#651725;color:#3d2027}
+#productionTable tbody tr:nth-child(4n+1) td{border-top-color:#651725}#productionTable tbody tr:nth-child(4n+2) td{border-bottom-color:#d8c4ca}#productionTable tbody tr:nth-child(4n) td{border-bottom-color:#651725}
+th,td{border-color:#d5c7cc}.line-name span{color:#716168}.inherited{color:#61545a}
+.kg-cell{background:#f5eff1}.kg-input{border-color:#d7c5cb}.material-select{border-color:#cdbbc1}
+.summary th,.side .summary th{background:#651725;color:#fff}.summary .total td{background:#f0e2e6;border-top-color:#651725}
+.blend{border-color:#dfcbd0;background:linear-gradient(145deg,#fff6f7,#f2edef)}.blend h3{color:#651725}.field label{color:#716168}.field input,.field select{border-color:#d7c5cb}
+.archive-item{border-bottom-color:#dfd3d7}.archive-item strong{color:#292329}.archive-item small{color:#71676b}.notice{background:#f7edef;border-top-color:#dfcbd0;color:#651725}
+.week-toolbar{background:linear-gradient(120deg,#fff 0%,#f8f1f3 55%,#f1edef 100%);border-color:#dfcbd0}.week-toolbar .week-title{color:#651725}.week-picker-wrap label{color:#651725}.week-picker-wrap input{border-color:#d2b9c0}.week-range{background:linear-gradient(110deg,#651725,#873544);color:#fff}.day-date{color:#651725}
+/* Testo bianco garantito su intestazioni rosso scuro */
+#productionTable thead tr:first-child th.dayhead,#productionTable thead tr:first-child th.dayhead *,#productionTable thead tr:nth-child(2) th,#productionTable thead tr:nth-child(2) th *,#productionTable thead th.day-date{color:#fff!important}
+#productionTable thead tr:first-child th.dayhead,#productionTable thead tr:nth-child(2) th{background:linear-gradient(110deg,#651725,#873544)!important}
+#productionTable thead th.day-date{opacity:1!important}
+</style>

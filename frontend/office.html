@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ufficio - Liste di Prelievo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#171a1f; --paper:#f3f4f7; --panel:#ffffff; --line:#e5e7eb;
+    --muted:#6b7280; --accent:#3556d8; --accent-dark:#2a44b0;
+    --good:#1f9d55; --warn:#d9750a; --danger:#d64545;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system, Segoe UI, Roboto, sans-serif; background:var(--paper); color:var(--ink); }
+  h1,h2,h3,.brand,.stat-value { font-family:"Space Grotesk", sans-serif; }
+
+  .app-shell { display:flex; min-height:100vh; }
+
+  .sidebar { width:230px; height:100vh; position:sticky; top:0; align-self:flex-start; overflow-y:auto; background:var(--panel); border-right:1px solid var(--line); padding:20px 14px; flex-shrink:0; }
+  .brand { font-size:18px; font-weight:700; padding:6px 10px 22px; }
+  .nav-item {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    width:100%; text-align:left; background:none; border:none; padding:11px 12px; margin-bottom:4px;
+    border-radius:9px; font-size:14px; color:var(--ink); cursor:pointer; font-weight:500;
+  }
+  .nav-item:hover { background:#f0f1f4; }
+  .nav-item.active { background:var(--accent); color:white; }
+  .nav-badge { background:var(--warn); color:white; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px; }
+  .nav-item.active .nav-badge { background:rgba(255,255,255,0.25); }
+
+  .main-area { flex:1; min-width:0; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 28px; border-bottom:1px solid var(--line); background:var(--panel); }
+  .breadcrumb { font-size:13px; color:var(--muted); }
+  .breadcrumb span { color:var(--ink); font-weight:600; }
+  .status-pill { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .status-pill .dot { width:8px; height:8px; border-radius:50%; background:#c6c9d0; }
+  .status-pill.on .dot { background:var(--good); }
+
+  .vista { padding:26px 28px; }
+  .vista h1 { margin:0 0 18px 0; font-size:24px; }
+
+  .stat-cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:22px; }
+  .stat-card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
+  .stat-card .stat-title { font-size:16px; font-weight:700; margin-bottom:10px; }
+  .stat-card.blue .stat-title { color:var(--accent); }
+  .stat-card.orange .stat-title { color:var(--warn); }
+  .stat-card.green .stat-title { color:var(--good); }
+  .stat-value { font-size:26px; font-weight:700; display:inline-block; margin-right:8px; }
+  .stat-sub { font-size:12px; color:var(--muted); }
+
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .panel-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line); gap:12px; }
+  .panel-header h2 { margin:0; font-size:16px; }
+  .search-box { position:relative; flex:1; max-width:320px; }
+  .search-box input { width:100%; font-size:14px; padding:9px 12px 9px 32px; border-radius:9px; border:1px solid var(--line); }
+  .search-box::before { content:"🔍"; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; opacity:.5; }
+
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding:10px 20px; border-bottom:1px solid var(--line); }
+  tbody td { padding:13px 20px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:#fafbfc; }
+  .lp-numero { font-weight:600; }
+  .lp-data { color:var(--muted); white-space:nowrap; }
+
+  .stato-pill { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; white-space:nowrap; }
+  .stato-pill .dot { width:7px; height:7px; border-radius:50%; }
+  .stato-pill.nuovo { color:var(--warn); } .stato-pill.nuovo .dot { background:var(--warn); }
+  .stato-pill.inviato { color:var(--accent); } .stato-pill.inviato .dot { background:var(--accent); }
+  .stato-pill.attesa { color:#b8860b; } .stato-pill.attesa .dot { background:#b8860b; }
+  .stato-pill.confermato { color:var(--good); } .stato-pill.confermato .dot { background:var(--good); }
+
+  select, button { font-size:13px; padding:7px 10px; border-radius:7px; border:1px solid var(--line); font-family:inherit; }
+  button { background:var(--accent); color:white; border:none; cursor:pointer; white-space:nowrap; font-weight:600; }
+  button:hover { background:var(--accent-dark); }
+  .row-actions { display:flex; gap:6px; align-items:center; }
+  .camion-invio { display:none; align-items:center; gap:8px; flex-wrap:wrap; padding:12px 20px; border-bottom:1px solid var(--line); background:#f8f9fc; }
+  .camion-invio.visibile { display:flex; }
+  .camion-invio input, .camion-invio select { min-width:180px; padding:9px 10px; border-radius:7px; border:1px solid var(--line); }
+  .camion-invio .conteggio { color:var(--muted); font-size:13px; margin-right:auto; }
+  .check-lp { width:18px; height:18px; cursor:pointer; }
+  .btn-secondario { background:#f3f4f6 !important; color:var(--ink) !important; }
+  .btn-secondario:hover { background:#e5e7eb !important; }
+  .btn-danger { background:#fdecec !important; color:#991b1b !important; }
+  .btn-danger:hover { background:#fbd8d8 !important; }
+  .btn-success { background:var(--good) !important; }
+  .btn-success:hover { background:#187e44 !important; }
+
+  .empty { text-align:center; color:var(--muted); padding:50px 0; }
+  .pagination { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-top:1px solid var(--line); font-size:13px; color:var(--muted); }
+  .pagination button { background:white; color:var(--ink); border:1px solid var(--line); }
+  .pagination button:disabled { opacity:.4; cursor:default; }
+
+  .card-approvazione { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--warn); border-radius:12px; padding:16px 20px; margin-bottom:12px; }
+  .card-approvazione .riga-top { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
+  .card-approvazione h3 { margin:0 0 3px 0; font-size:16px; }
+  .card-approvazione .cliente { font-size:13px; color:var(--muted); }
+  .card-approvazione .nota { margin-top:10px; background:#fbfaf8; border:1px dashed var(--line); border-radius:8px; padding:9px 12px; font-size:13px; }
+  .card-approvazione .azioni { display:flex; gap:8px; margin-top:14px; }
+
+  .card-tablet { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:10px; }
+  .tablet-monitor-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .tablet-nome { font-weight:600; }
+  .tablet-stato { font-size:13px; display:flex; align-items:center; gap:6px; }
+  .tablet-stato .dot { width:8px; height:8px; border-radius:50%; }
+  .tablet-edit-name { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin:10px 0 16px; }
+  .monitor-camion { margin-top:14px; padding:12px 14px; border:1px solid var(--line); border-radius:9px; background:#fafbfc; }
+  .monitor-camion h4 { margin:0 0 8px; font-size:14px; }
+  .monitor-lp { padding:5px 0; color:var(--muted); font-size:12px; }
+  .impostazioni-card { max-width:640px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  .impostazioni-card label { display:block; font-weight:700; margin:14px 0 6px; }
+  .impostazioni-card select { min-width:260px; padding:10px; }
+  .pianificazione-toolbar { display:flex; align-items:end; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+  .pianificazione-heading { display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:14px; }
+  .pianificazione-heading h1 { margin:0; flex:0 0 auto; }
+  .metriche-pianificazione { flex:1 1 690px; display:grid; grid-template-columns:repeat(7,minmax(82px,1fr)); gap:8px; }
+  .metrica-carico { min-width:0; background:#fff; border:1px solid var(--line); border-radius:10px; padding:9px 10px; }
+  .metrica-carico.settimana { background:#f3f6ff; border-color:#ccd6ff; }
+  .metrica-carico small { display:block; min-height:28px; color:var(--muted); font-size:11px; line-height:1.25; }
+  .metrica-carico strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:17px; }
+  @media(max-width:1100px){.metriche-pianificazione{grid-template-columns:repeat(4,minmax(90px,1fr));flex-basis:100%}}
+  @media(max-width:620px){.metriche-pianificazione{grid-template-columns:repeat(2,minmax(100px,1fr))}.pianificazione-heading h1{font-size:22px}}
+  .giorni-settimana { display:flex; align-items:stretch; gap:7px; flex:1 1 auto; flex-wrap:nowrap; overflow-x:auto; padding:2px 2px 2px; margin-bottom:0; }
+  .giorno-settimana { min-width:88px; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); text-align:center; }
+  .giorno-settimana strong,.giorno-settimana small { display:block; }
+  .giorno-settimana small { margin-top:3px; color:var(--muted); font-size:12px; }
+  .giorno-settimana.selezionato { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 2px 7px #3556d844; }
+  .giorno-settimana.selezionato small { color:#e4eaff; }
+  @media(max-width:620px){.giorni-settimana{gap:5px}.giorno-settimana{min-width:74px;padding:8px 9px}}
+  .pianificazione-toolbar label,.form-carico label { display:flex; flex-direction:column; gap:5px; color:var(--muted); font-size:12px; font-weight:600; }
+  .pianificazione-toolbar input,.form-carico input,.form-carico select,.form-carico textarea { padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; color:var(--ink); background:white; }
+  .form-carico { background:white; border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:18px; }
+  .form-carico h2 { margin:0 0 14px; font-size:17px; }
+  .form-carico-grid { display:grid; grid-template-columns:repeat(4,minmax(130px,1fr)); gap:12px; }
+  .form-carico .wide { grid-column:span 2; }
+  .form-carico textarea { resize:vertical; min-height:38px; }
+  .form-carico-actions { display:flex; gap:8px; margin-top:14px; }
+  .pianificazione-scroll { overflow:auto; }
+  .pianificazione-table { min-width:1120px; }
+  .pianificazione-table th,.pianificazione-table td { padding:10px 12px; }
+  .pianificazione-table td { font-size:13px; }
+  .carico-stato { display:inline-block; border-radius:99px; padding:4px 9px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .carico-stato.pianificato { color:#8a4b00; background:#fff1d6; }
+  .carico-stato.arrivato { color:#166534; background:#dcfce7; }
+  .carico-stato-select { border:0; border-radius:99px; padding:6px 9px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+  .carico-stato-select.pianificato { color:#8a4b00; background:#fff1d6; }
+  .carico-stato-select.arrivato { color:#166534; background:#dcfce7; }
+  .stato-caricato { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .stato-caricato label { display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:600; cursor:pointer; }
+  .stato-caricato input { width:16px; height:16px; accent-color:#198754; cursor:pointer; }
+  .pianificazione-table tr.carico-completato td { background:#e2f5e8; }
+  .pianificazione-table tr.carico-completato:hover td { background:#d5efdd; }
+  .carico-actions { display:flex; gap:6px; }
+  .scarichi-editor { grid-column:1/-1; border:1px solid var(--line); border-radius:10px; padding:12px; background:#fafbfc; }
+  .scarichi-editor h3 { margin:0 0 10px; font-size:14px; }
+  .scarico-edit-row { display:grid; grid-template-columns:34px 2fr 1.5fr 1fr; gap:9px; align-items:end; margin-top:8px; }
+  .scarico-edit-row .scarico-n { align-self:center; color:var(--muted); font-weight:700; }
+  .scarico-riepilogo { display:grid; gap:4px; min-width:170px; }
+  .scarico-riepilogo > div { display:grid; grid-template-columns:minmax(130px,2fr) minmax(100px,1.5fr) minmax(70px,1fr); gap:8px; padding:4px 0; border-bottom:1px solid #edf0f4; }
+  .sezione-carichi td { background:#eef2ff; color:#233b9b; font-weight:700; font-size:14px; padding:12px 14px; }
+  .categoria-partenza td { background:#eff6ff; color:#1e4b74; }
+  @media(max-width:900px){.form-carico-grid{grid-template-columns:repeat(2,minmax(130px,1fr));}}
+  @media(max-width:620px){.scarico-edit-row{grid-template-columns:26px 1fr;}.scarico-edit-row label{grid-column:2;}.form-carico .wide{grid-column:span 2;}}
+
+  .overlay { position:fixed; inset:0; background:rgba(17,24,39,0.5); display:flex; align-items:center; justify-content:center; z-index:50; }
+  .modal { background:white; border-radius:14px; padding:24px; width:380px; max-width:90vw; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+  .modal h2 { margin:0 0 4px 0; font-size:17px; }
+  .modal .modal-meta { color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .modal-actions { display:flex; gap:10px; }
+  .modal-actions button { flex:1; padding:10px; font-size:14px; }
+  .modal-invia { display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+  .modal-invia.visibile { display:block; }
+  .modal-invia select { width:100%; margin-bottom:10px; }
+  .modal-invia button { width:100%; }
+
+  .modal-articoli { width:680px; max-width:95vw; max-height:85vh; overflow-y:auto; }
+  .modal-articoli table { width:100%; }
+  .modal-articoli th { padding:8px; font-size:11px; }
+  .modal-articoli td { padding:8px; font-size:14px; }
+  .modal-articoli tr.riga-eliminata { opacity:0.4; text-decoration:line-through; }
+  .modal-articoli input.qty { width:90px; padding:6px; border-radius:6px; border:1px solid var(--line); }
+  .modal-articoli .sub-metri { font-size:11px; color:var(--muted); margin-top:2px; }
+  .modal-chiudi { margin-top:16px; width:100%; background:#f3f4f6 !important; color:var(--ink) !important; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">DERIPLAST</div>
+    <nav>
+      <button class="nav-item active" id="nav-lista" onclick="mostraVista('lista')">
+        <span>📋 Liste di Prelievo</span>
+      </button>
+      <button class="nav-item" id="nav-pianificazione" onclick="mostraVista('pianificazione')">
+        <span>🗓️ Pianificazione carichi</span>
+      </button>
+      <button class="nav-item" id="nav-approvazione" onclick="mostraVista('approvazione')">
+        <span>✅ Da approvare</span>
+        <span class="nav-badge" id="badge-approvazione" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-tablet" onclick="mostraVista('tablet')">
+        <span>📱 Tablet</span>
+      </button>
+      <button class="nav-item" id="nav-impostazioni" onclick="mostraVista('impostazioni')">
+        <span>⚙️ Impostazioni</span>
+      </button>
+    </nav>
+  </aside>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div class="breadcrumb">Home / <span id="breadcrumb-corrente">Liste di Prelievo</span></div>
+      <div class="status-pill" id="status"><span class="dot"></span><span id="status-testo">Connessione...</span></div>
+    </div>
+
+    <section id="vista-lista" class="vista">
+      <h1>Liste di Prelievo</h1>
+      <div class="stat-cards">
+        <div class="stat-card blue">
+          <div class="stat-title">Totale LP</div>
+          <div><span class="stat-value" id="stat-totale">0</span><span class="stat-sub">nella finestra attuale</span></div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-title">Da approvare</div>
+          <div><span class="stat-value" id="stat-attesa">0</span><span class="stat-sub">richiedono conferma</span></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-title">Confermate</div>
+          <div><span class="stat-value" id="stat-confermate">0</span><span class="stat-sub">scritte su ARCA</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Elenco</h2>
+          <div class="search-box"><input id="ricerca" placeholder="Cerca per numero LP o cliente..." oninput="render()"></div>
+        </div>
+        <div class="camion-invio" id="camion-invio">
+          <span class="conteggio" id="camion-conteggio"></span>
+          <input id="camion-nome" placeholder="Nome del camion">
+          <span id="camion-tablet-destinazione"></span>
+          <button onclick="inviaCamion()">Invia LP selezionate</button>
+        </div>
+        <table id="tabella" style="display:none">
+          <thead>
+            <tr><th></th><th>LP</th><th>Cliente</th><th>Data</th><th>Stato</th><th>Azione</th></tr>
+          </thead>
+          <tbody id="lista"></tbody>
+        </table>
+        <div id="vuoto" class="empty">Nessun LP in attesa.</div>
+        <div class="pagination" id="pagination-bar" style="display:none">
+          <button id="btn-prec" onclick="paginaPrec()">Precedente</button>
+          <span id="pagina-info"></span>
+          <button id="btn-succ" onclick="paginaSucc()">Successiva</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="vista-approvazione" class="vista" style="display:none">
+      <h1>Da approvare</h1>
+      <div id="lista-approvazione"></div>
+      <div id="approvazione-vuoto" class="empty">Nessuna richiesta in attesa.</div>
+    </section>
+
+    <section id="vista-pianificazione" class="vista" style="display:none">
+      <div class="pianificazione-heading">
+        <h1>Pianificazione settimanale dei carichi</h1>
+        <div class="metriche-pianificazione" aria-label="Riepilogo carichi">
+          <div class="metrica-carico"><small>m³ del giorno</small><strong id="metriche-giorno-mc">0</strong></div>
+          <div class="metrica-carico"><small>Kg del giorno</small><strong id="metriche-giorno-kg">0</strong></div>
+          <div class="metrica-carico"><small>Fatturazione del giorno</small><strong id="metriche-giorno-fatt">0 €</strong></div>
+          <div class="metrica-carico"><small>Viaggi pianificati</small><strong id="metriche-giorno-pianificati">0</strong></div>
+          <div class="metrica-carico"><small>Viaggi arrivati</small><strong id="metriche-giorno-arrivati">0</strong></div>
+          <div class="metrica-carico settimana"><small>Kg totali settimana</small><strong id="metriche-settimana-kg">0</strong></div>
+          <div class="metrica-carico settimana"><small>Fatturazione settimana</small><strong id="metriche-settimana-fatt">0 €</strong></div>
+        </div>
+      </div>
+      <div class="pianificazione-toolbar">
+        <label>Settimana <input type="week" id="carichi-settimana"></label>
+        <div id="giorni-settimana" class="giorni-settimana" role="group" aria-label="Seleziona il giorno della settimana"></div>
+      </div>
+      <div class="form-carico">
+        <h2 id="carico-form-titolo">Aggiungi un viaggio</h2>
+        <input type="hidden" id="carico-id">
+        <div class="form-carico-grid">
+          <input type="hidden" id="carico-giorno" value="lunedi">
+          <label>Tipo trasporto<select id="carico-tipo-trasporto"><option value="franco_destino">Franco destino</option><option value="franco_partenza">Franco partenza</option></select></label>
+          <label>N. viaggio<input id="carico-viaggio"></label>
+          <label>Tipo camion<input id="carico-tipo-camion"></label>
+          <label>Vettore<input id="carico-vettore"></label>
+          <div class="scarichi-editor"><h3>Scarichi del viaggio (fino a 4 clienti)</h3><div id="scarichi-editor-lista"></div></div>
+          <label>m³<input id="carico-mc" type="number" min="0" step="0.01"></label>
+          <label>Kg<input id="carico-kg" type="number" min="0" step="0.01"></label>
+          <label>Fatturazione<input id="carico-fatturazione"></label>
+          <label>Prezzo<input id="carico-prezzo" type="number" min="0" step="0.01"></label>
+          <label>Orario<input id="carico-orario" type="time"></label>
+          <label>Stato<select id="carico-stato"><option value="pianificato">Pianificato</option><option value="arrivato">Arrivato</option></select></label>
+          <label class="wide">Note<textarea id="carico-note"></textarea></label>
+        </div>
+        <div class="form-carico-actions"><button onclick="salvaCaricoPianificato()">Salva viaggio</button><button class="btn-secondario" onclick="pulisciFormCarico()">Annulla modifica</button></div>
+      </div>
+      <div class="panel"><div class="pianificazione-scroll"><table class="pianificazione-table"><thead><tr><th>Giorno</th><th>Viaggio</th><th>Camion</th><th>Vettore</th><th>Clienti / scarichi (cliente · materiale · LP)</th><th>m³</th><th>Kg</th><th>Fatturazione</th><th>Prezzo</th><th>Orario</th><th>Stato / Caricato</th><th>Note</th><th></th></tr></thead><tbody id="carichi-lista"></tbody></table></div><div id="carichi-vuoto" class="empty" style="display:none">Nessun viaggio pianificato per questa settimana.</div></div>
+    </section>
+
+    <section id="vista-tablet" class="vista" style="display:none">
+      <h1>Chi sta caricando cosa</h1>
+      <div id="lista-tablet"></div>
+      <div id="tablet-vuoto" class="empty" style="display:none">Nessun tablet registrato.</div>
+    </section>
+    <section id="vista-impostazioni" class="vista" style="display:none">
+      <h1>Impostazioni</h1>
+      <div class="impostazioni-card">
+        <h2>Tablet predefinito</h2>
+        <p>Le nuove LP e i nuovi camion inviati dall’ufficio arrivano sempre a questo tablet, che può poi assegnarli agli altri.</p>
+        <label for="tablet-predefinito-select">Seleziona tablet predefinito</label>
+        <select id="tablet-predefinito-select"><option value="">Seleziona un tablet...</option></select>
+        <button style="margin-left:8px" onclick="salvaTabletPredefinito()">Salva</button>
+        <div id="tablet-predefinito-salvato" style="margin-top:12px;color:var(--muted);font-size:13px"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="popup-overlay" style="display:none">
+  <div class="modal">
+    <h2 id="popup-titolo">Nuova Lista di Prelievo</h2>
+    <div class="modal-meta" id="popup-meta"></div>
+    <div class="modal-actions" id="popup-scelta">
+      <button class="btn-secondario" onclick="popupNo()">No</button>
+      <button onclick="popupSi()">Sì</button>
+    </div>
+    <div class="modal-invia" id="popup-invia-area">
+      <input id="popup-camion-nome" placeholder="Nome del camion" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid var(--line); border-radius:7px;">
+      <div id="popup-tablet-destinazione" class="modal-meta"></div>
+      <button onclick="popupInvia()">Invia al predefinito</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="articoli-overlay" style="display:none">
+  <div class="modal modal-articoli">
+    <h2 id="articoli-titolo">Articoli LP</h2>
+    <div class="modal-meta" id="articoli-meta"></div>
+    <div class="modal-meta" id="articoli-note" style="display:none; background:#f9fafb; padding:8px 10px; border-radius:6px; margin-bottom:8px;"></div>
+    <table>
+      <thead><tr><th>Articolo</th><th>Descrizione</th><th>Quantità</th><th>Nota</th><th></th></tr></thead>
+      <tbody id="articoli-righe"></tbody>
+    </table>
+    <button class="modal-chiudi" onclick="chiudiArticoli()">Chiudi</button>
+  </div>
+</div>
+
+<div class="overlay" id="tablet-edit-overlay" style="display:none">
+  <div class="modal">
+    <h2>Modifica tablet</h2>
+    <div class="modal-meta">Aggiorna il nome visualizzato del tablet.</div>
+    <input class="tablet-edit-name" id="tablet-edit-name" placeholder="Nome tablet">
+    <div class="modal-actions">
+      <button class="btn-secondario" onclick="chiudiModificaTablet()">Annulla</button>
+      <button onclick="salvaModificaTablet()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "";
+let tablets = [];
+let lpMap = {};
+let lpSelezionate = new Set();
+let tabletPredefinitoId = null;
+let tabletPredefinitoNome = null;
+let paginaCorrente = 1;
+const PER_PAGINA = 10;
+let carichiPianificati = [];
+
+function settimanaISO(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+const giorniCarico = { lunedi:"Lunedì", martedi:"Martedì", mercoledi:"Mercoledì", giovedi:"Giovedì", venerdi:"Venerdì", sabato:"Sabato" };
+const ordineGiorniCarico = Object.keys(giorniCarico);
+let giornoCaricoSelezionato = ordineGiorniCarico[Math.min(5, Math.max(0, new Date().getDay() - 1))];
+function escapeHtml(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+function dataGiornoSettimana(week, offset) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(week || ""); if (!match) return null;
+  const jan4 = new Date(Number(match[1]), 0, 4); const monday = new Date(jan4);
+  monday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (Number(match[2]) - 1) * 7 + offset);
+  return monday;
+}
+function renderSelettoreGiorni() {
+  const week = document.getElementById("carichi-settimana").value;
+  document.getElementById("giorni-settimana").innerHTML = ordineGiorniCarico.map((giorno, i) => {
+    const d = dataGiornoSettimana(week, i); const data = d ? d.toLocaleDateString("it-IT", {day:"2-digit", month:"2-digit"}) : "";
+    return `<button type="button" class="giorno-settimana ${giorno === giornoCaricoSelezionato ? "selezionato" : ""}" aria-pressed="${giorno === giornoCaricoSelezionato}" onclick="selezionaGiornoCarico('${giorno}')"><strong>${giorniCarico[giorno]}</strong><small>${data}</small></button>`;
+  }).join("");
+}
+function selezionaGiornoCarico(giorno) {
+  giornoCaricoSelezionato = giorno;
+  document.getElementById("carico-giorno").value = giorno;
+  renderSelettoreGiorni(); renderPianificazione();
+}
+function numeroCarico(valore) {
+  if (typeof valore === "number") return Number.isFinite(valore) ? valore : 0;
+  let testo = String(valore ?? "").trim().replace(/[^\d,.-]/g, "");
+  if (testo.includes(",")) testo = testo.replace(/\./g, "").replace(",", ".");
+  const numero = Number(testo);
+  return Number.isFinite(numero) ? numero : 0;
+}
+function formatoQuantita(valore) { return valore.toLocaleString("it-IT", {maximumFractionDigits:2}); }
+function aggiornaMetrichePianificazione(viaggiGiorno) {
+  const somma = (viaggi, campo) => viaggi.reduce((tot, c) => tot + numeroCarico(c[campo]), 0);
+  const pianificati = viaggiGiorno.filter(c => c.stato !== "arrivato").length;
+  const arrivati = viaggiGiorno.filter(c => c.stato === "arrivato").length;
+  document.getElementById("metriche-giorno-mc").textContent = formatoQuantita(somma(viaggiGiorno, "mc"));
+  document.getElementById("metriche-giorno-kg").textContent = formatoQuantita(somma(viaggiGiorno, "kg"));
+  document.getElementById("metriche-giorno-fatt").textContent = `${formatoQuantita(somma(viaggiGiorno, "fatturazione"))} €`;
+  document.getElementById("metriche-giorno-pianificati").textContent = pianificati;
+  document.getElementById("metriche-giorno-arrivati").textContent = arrivati;
+  document.getElementById("metriche-settimana-kg").textContent = formatoQuantita(somma(carichiPianificati, "kg"));
+  document.getElementById("metriche-settimana-fatt").textContent = `${formatoQuantita(somma(carichiPianificati, "fatturazione"))} €`;
+}
+async function caricaPianificazione() {
+  const settimana = document.getElementById("carichi-settimana").value;
+  if (!settimana) return;
+  const res = await fetch(`${API}/api/pianificazione-carichi?settimana=${encodeURIComponent(settimana)}`);
+  if (!res.ok) {
+    let dettaglio = "";
+    try { const errore = await res.json(); dettaglio = errore.detail || errore.error || ""; } catch (_) {}
+    alert(`Impossibile caricare la pianificazione (errore ${res.status}).${dettaglio ? ` ${dettaglio}` : ""} Riavvia il server LP per caricare l'aggiornamento.`);
+    return;
+  }
+  carichiPianificati = await res.json(); renderSelettoreGiorni(); renderPianificazione();
+}
+function renderPianificazione() {
+  const tbody = document.getElementById("carichi-lista");
+  const viaggiGiorno = carichiPianificati.filter(c => c.giorno === giornoCaricoSelezionato);
+  aggiornaMetrichePianificazione(viaggiGiorno);
+  document.getElementById("carichi-vuoto").style.display = viaggiGiorno.length ? "none" : "block";
+  document.getElementById("carichi-vuoto").textContent = `Nessun viaggio pianificato per ${giorniCarico[giornoCaricoSelezionato]} in questa settimana.`;
+  const scarichi = c => (Array.isArray(c.scarichi) && c.scarichi.length ? c.scarichi : (c.cliente || c.materiale || c.lp ? [{cliente:c.cliente,materiale:c.materiale,lp:c.lp}] : []));
+  const riga = c => `<tr class="${c.caricato ? "carico-completato" : ""}"><td>${giorniCarico[c.giorno] || c.giorno}</td><td>${escapeHtml(c.viaggio)}</td><td>${escapeHtml(c.tipo_camion)}</td><td>${escapeHtml(c.vettore)}</td><td><div class="scarico-riepilogo">${scarichi(c).map(s=>`<div><span>${escapeHtml(s.cliente)}</span><span>${escapeHtml(s.materiale)}</span><span>${escapeHtml(s.lp)}</span></div>`).join("")}</div></td><td>${escapeHtml(c.mc)}</td><td>${escapeHtml(c.kg)}</td><td>${escapeHtml(c.fatturazione)}</td><td>${escapeHtml(c.prezzo)}</td><td>${escapeHtml(c.orario)}</td><td><div class="stato-caricato"><select class="carico-stato-select ${c.stato === "arrivato" ? "arrivato" : "pianificato"}" aria-label="Stato viaggio ${escapeHtml(c.viaggio || "")}" onchange="cambiaStatoCarico('${c.id}', this.value)"><option value="pianificato" ${c.stato !== "arrivato" ? "selected" : ""}>Pianificato</option><option value="arrivato" ${c.stato === "arrivato" ? "selected" : ""}>Arrivato</option></select><label><input type="checkbox" ${c.caricato ? "checked" : ""} onchange="cambiaCaricatoCarico('${c.id}', this.checked)">Caricato</label></div></td><td>${escapeHtml(c.note)}</td><td><div class="carico-actions"><button class="btn-secondario" onclick="modificaCarico('${c.id}')">Modifica</button><button class="btn-danger" onclick="eliminaCarico('${c.id}')">Elimina</button></div></td></tr>`;
+  const destino = viaggiGiorno.filter(c => (c.tipo_trasporto || "franco_destino") === "franco_destino");
+  const partenza = viaggiGiorno.filter(c => c.tipo_trasporto === "franco_partenza");
+  tbody.innerHTML = `<tr class="sezione-carichi"><td colspan="13">FRANCO DESTINO</td></tr>${destino.map(riga).join("")}<tr class="sezione-carichi categoria-partenza"><td colspan="13">FRANCO PARTENZA</td></tr>${partenza.map(riga).join("")}`;
+}
+async function cambiaStatoCarico(id, stato) {
+  const carico = carichiPianificati.find(c => c.id === id);
+  if (!carico || !["pianificato", "arrivato"].includes(stato)) return;
+  await aggiornaCaricoInline(carico, {stato});
+}
+async function cambiaCaricatoCarico(id, caricato) {
+  const carico = carichiPianificati.find(c => c.id === id);
+  if (!carico) return;
+  await aggiornaCaricoInline(carico, {caricato});
+}
+async function aggiornaCaricoInline(carico, modifiche) {
+  const { id: _id, settimana, giorno, aggiornato_il, ...dati } = carico;
+  Object.assign(dati, modifiche);
+  const res = await fetch(`${API}/api/pianificazione-carichi/${encodeURIComponent(carico.id)}`, {
+    method:"PUT", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({settimana, giorno, dati})
+  });
+  if (!res.ok) { alert("Non è stato possibile aggiornare il viaggio."); renderPianificazione(); return; }
+  Object.assign(carico, modifiche);
+  renderPianificazione();
+}
+function inizializzaScarichiEditor(scarichi = []) {
+  const legacy = scarichi.length ? scarichi : [{cliente:"",materiale:"",lp:""}];
+  document.getElementById("scarichi-editor-lista").innerHTML = Array.from({length:4},(_,i)=>{const s=legacy[i]||{};return `<div class="scarico-edit-row"><span class="scarico-n">${i+1}</span><label>Cliente / destinazione<input class="scarico-cliente" value="${escapeHtml(s.cliente)}" placeholder="Cliente ${i+1}"></label><label>Tipo materiale<input class="scarico-materiale" value="${escapeHtml(s.materiale)}"></label><label>LP<input class="scarico-lp" value="${escapeHtml(s.lp)}" inputmode="numeric"></label></div>`;}).join("");
+}
+function datiDaFormCarico() {
+  const get = id => document.getElementById(id).value.trim();
+  const scarichi = [...document.querySelectorAll(".scarico-edit-row")].map(row=>({cliente:row.querySelector(".scarico-cliente").value.trim(),materiale:row.querySelector(".scarico-materiale").value.trim(),lp:row.querySelector(".scarico-lp").value.trim()})).filter(s=>s.cliente||s.materiale||s.lp);
+  return { giorno:get("carico-giorno"), dati:{tipo_trasporto:get("carico-tipo-trasporto"),viaggio:get("carico-viaggio"),tipo_camion:get("carico-tipo-camion"),vettore:get("carico-vettore"),scarichi,mc:get("carico-mc"),kg:get("carico-kg"),fatturazione:get("carico-fatturazione"),prezzo:get("carico-prezzo"),orario:get("carico-orario"),stato:get("carico-stato"),note:get("carico-note")}};
+}
+async function salvaCaricoPianificato() {
+  const id = document.getElementById("carico-id").value;
+  const record = datiDaFormCarico(); record.settimana = document.getElementById("carichi-settimana").value;
+  record.dati.caricato = id ? !!carichiPianificati.find(c => c.id === id)?.caricato : false;
+  if (!record.settimana || !record.dati.scarichi.length || record.dati.scarichi.some(s=>!s.cliente)) { alert("Seleziona la settimana e inserisci il cliente per ogni scarico compilato."); return; }
+  const res = await fetch(`${API}/api/pianificazione-carichi${id ? "/" + encodeURIComponent(id) : ""}`, { method:id?"PUT":"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(record) });
+  if (!res.ok) { alert("Errore nel salvataggio del viaggio."); return; }
+  pulisciFormCarico(); await caricaPianificazione();
+}
+function modificaCarico(id) {
+  const c = carichiPianificati.find(x => x.id === id); if (!c) return;
+  document.getElementById("carico-id").value = c.id; document.getElementById("carico-form-titolo").textContent = "Modifica viaggio";
+  selezionaGiornoCarico(c.giorno);
+  document.getElementById("carico-tipo-trasporto").value = c.tipo_trasporto || "franco_destino";
+  for (const [k,v] of Object.entries({viaggio:c.viaggio,"tipo-camion":c.tipo_camion,vettore:c.vettore,mc:c.mc,kg:c.kg,fatturazione:c.fatturazione,prezzo:c.prezzo,orario:c.orario,stato:c.stato,note:c.note})) document.getElementById(`carico-${k}`).value = v ?? "";
+  inizializzaScarichiEditor(Array.isArray(c.scarichi) ? c.scarichi : [{cliente:c.cliente,materiale:c.materiale,lp:c.lp}]);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function pulisciFormCarico() { document.getElementById("carico-id").value=""; document.getElementById("carico-form-titolo").textContent="Aggiungi un viaggio"; document.querySelectorAll("#vista-pianificazione .form-carico input:not([type=hidden]),#vista-pianificazione .form-carico textarea").forEach(x=>x.value=""); document.getElementById("carico-tipo-trasporto").value="franco_destino"; document.getElementById("carico-stato").value="pianificato"; inizializzaScarichiEditor(); }
+async function eliminaCarico(id) { if (!confirm("Eliminare questo viaggio dalla pianificazione?")) return; const res=await fetch(`${API}/api/pianificazione-carichi/${encodeURIComponent(id)}`,{method:"DELETE"}); if(!res.ok){alert("Errore nell'eliminazione.");return;} await caricaPianificazione(); }
+document.getElementById("carichi-settimana").value = settimanaISO();
+document.getElementById("carichi-settimana").addEventListener("change", () => { renderSelettoreGiorni(); caricaPianificazione(); });
+document.getElementById("carico-giorno").value = giornoCaricoSelezionato;
+renderSelettoreGiorni();
+inizializzaScarichiEditor();
+
+async function caricaTablet() {
+  const res = await fetch(`${API}/api/tablets`);
+  tablets = await res.json();
+}
+
+async function caricaImpostazioni() {
+  const res = await fetch(`${API}/api/impostazioni`);
+  if (!res.ok) return;
+  const imp = await res.json();
+  tabletPredefinitoId = imp.tablet_predefinito_id;
+  tabletPredefinitoNome = imp.tablet_predefinito_nome;
+  renderImpostazioni();
+}
+
+function renderImpostazioni() {
+  const select = document.getElementById("tablet-predefinito-select");
+  if (!select) return;
+  select.innerHTML = `<option value="">Seleziona un tablet...</option>` +
+    tablets.map(t => `<option value="${t.id}">${t.nome}</option>`).join("");
+  select.value = tabletPredefinitoId || "";
+  document.getElementById("tablet-predefinito-salvato").textContent = tabletPredefinitoNome
+    ? `Tablet predefinito attuale: ${tabletPredefinitoNome}`
+    : "Nessun tablet predefinito configurato.";
+  aggiornaInvioCamion();
+}
+
+async function salvaTabletPredefinito() {
+  const tabletId = document.getElementById("tablet-predefinito-select").value || null;
+  const res = await fetch(`${API}/api/impostazioni/tablet-predefinito`, {
+    method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tablet_id: tabletId })
+  });
+  if (!res.ok) { alert("Errore nel salvataggio del tablet predefinito"); return; }
+  await caricaImpostazioni();
+  alert(tabletPredefinitoNome ? `Tablet predefinito impostato: ${tabletPredefinitoNome}` : "Tablet predefinito rimosso");
+}
+
+function mostraVista(nome) {
+  ["lista", "pianificazione", "approvazione", "tablet", "impostazioni"].forEach(v => {
+    document.getElementById(`vista-${v}`).style.display = v === nome ? "block" : "none";
+    document.getElementById(`nav-${v}`).classList.toggle("active", v === nome);
+  });
+  const titoli = { lista: "Liste di Prelievo", pianificazione: "Pianificazione carichi", approvazione: "Da approvare", tablet: "Caricamenti in corso", impostazioni: "Impostazioni" };
+  document.getElementById("breadcrumb-corrente").textContent = titoli[nome];
+  if (nome === "tablet") renderTablet();
+  if (nome === "pianificazione") caricaPianificazione();
+  if (nome === "impostazioni") renderImpostazioni();
+  if (nome === "approvazione") renderApprovazione();
+}
+
+function badgeClass(stato) {
+  if (stato === "nuovo") return "nuovo";
+  if (stato === "inviato_tablet") return "inviato";
+  if (stato === "in_attesa_approvazione") return "attesa";
+  return "confermato";
+}
+
+function badgeLabel(stato) {
+  if (stato === "nuovo") return "Nuovo";
+  if (stato === "inviato_tablet") return "Sul tablet";
+  if (stato === "in_attesa_approvazione") return "Da approvare";
+  if (stato === "confermato") return "Confermato";
+  return stato;
+}
+
+function formattaData(dataIso) {
+  if (!dataIso) return "";
+  const d = new Date(dataIso);
+  if (isNaN(d)) return dataIso;
+  return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function aggiornaStatistiche() {
+  const items = Object.values(lpMap);
+  document.getElementById("stat-totale").textContent = items.length;
+  const inAttesa = items.filter(l => l.stato === "in_attesa_approvazione").length;
+  document.getElementById("stat-attesa").textContent = inAttesa;
+  document.getElementById("stat-confermate").textContent = items.filter(l => l.stato === "confermato").length;
+
+  const badge = document.getElementById("badge-approvazione");
+  badge.textContent = inAttesa;
+  badge.style.display = inAttesa > 0 ? "inline-flex" : "none";
+}
+
+function render() {
+  lpSelezionate = new Set([...lpSelezionate].filter(lpId => lpMap[lpId]?.stato === "nuovo"));
+  aggiornaStatistiche();
+
+  const tabella = document.getElementById("tabella");
+  const vuoto = document.getElementById("vuoto");
+  const lista = document.getElementById("lista");
+  const paginationBar = document.getElementById("pagination-bar");
+  aggiornaInvioCamion();
+
+  const query = (document.getElementById("ricerca")?.value || "").trim().toLowerCase();
+  let items = Object.values(lpMap).sort((a, b) => (b.data_creazione || "").localeCompare(a.data_creazione || ""));
+  if (query) {
+    items = items.filter(lp => {
+      const numero = (lp.numero || lp.lp_id || "").toString().toLowerCase();
+      const cliente = (lp.cliente_nome || lp.cliente_destinazione || "").toLowerCase();
+      return numero.includes(query) || cliente.includes(query);
+    });
+  }
+
+  if (!items.length) {
+    tabella.style.display = "none";
+    paginationBar.style.display = "none";
+    vuoto.style.display = "block";
+    vuoto.textContent = query ? "Nessun risultato per questa ricerca." : "Nessun LP in attesa.";
+    return;
+  }
+  tabella.style.display = "table";
+  vuoto.style.display = "none";
+
+  const totalePagine = Math.max(1, Math.ceil(items.length / PER_PAGINA));
+  if (paginaCorrente > totalePagine) paginaCorrente = totalePagine;
+  const inizio = (paginaCorrente - 1) * PER_PAGINA;
+  const paginaItems = items.slice(inizio, inizio + PER_PAGINA);
+
+  lista.innerHTML = paginaItems.map(lp => `
+    <tr>
+      <td>${lp.stato === "nuovo" ? `<input class="check-lp" type="checkbox" aria-label="Seleziona LP ${lp.numero || lp.lp_id}" ${lpSelezionate.has(lp.lp_id) ? "checked" : ""} onchange="selezionaLP('${lp.lp_id}', this.checked)">` : ""}</td>
+      <td class="lp-numero">${lp.numero || lp.lp_id}</td>
+      <td>${lp.cliente_nome || lp.cliente_destinazione || "-"}</td>
+      <td class="lp-data">${formattaData(lp.data_creazione)}</td>
+      <td><span class="stato-pill ${badgeClass(lp.stato)}"><span class="dot"></span>${badgeLabel(lp.stato)}</span>${lp.camion_nome ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">🚚 ${String(lp.camion_nome).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c])}</div>` : ""}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-secondario" onclick="apriArticoli('${lp.lp_id}')">Articoli</button>
+          ${lp.stato === "in_attesa_approvazione" ? `
+            <button class="btn-secondario" onclick="mostraVista('approvazione')">Vai ad approvare</button>
+          ` : ""}
+        </div>
+      </td>
+    </tr>
+  `).join("");
+
+  paginationBar.style.display = "flex";
+  document.getElementById("pagina-info").textContent = `Pagina ${paginaCorrente} di ${totalePagine}`;
+  document.getElementById("btn-prec").disabled = paginaCorrente <= 1;
+  document.getElementById("btn-succ").disabled = paginaCorrente >= totalePagine;
+}
+
+function paginaPrec() { if (paginaCorrente > 1) { paginaCorrente--; render(); } }
+function paginaSucc() { paginaCorrente++; render(); }
+
+function selezionaLP(lpId, selezionata) {
+  if (selezionata) lpSelezionate.add(lpId);
+  else lpSelezionate.delete(lpId);
+  aggiornaInvioCamion();
+}
+
+function aggiornaInvioCamion() {
+  const barra = document.getElementById("camion-invio");
+  if (!barra) return;
+  barra.classList.toggle("visibile", lpSelezionate.size > 0);
+  document.getElementById("camion-conteggio").textContent = `${lpSelezionate.size} LP selezionate`;
+  const destinazione = document.getElementById("camion-tablet-destinazione");
+  destinazione.textContent = tabletPredefinitoNome
+    ? `Destinazione: ${tabletPredefinitoNome}`
+    : "Configura prima il tablet predefinito nelle Impostazioni";
+  const btn = barra.querySelector("button");
+  btn.disabled = !tabletPredefinitoId;
+}
+
+async function inviaCamion() {
+  const nome = document.getElementById("camion-nome").value.trim();
+  const tabletId = tabletPredefinitoId;
+  if (!nome) { alert("Inserisci il nome del camion"); return; }
+  if (!tabletId) { alert("Configura prima il tablet predefinito nelle Impostazioni"); return; }
+  if (!lpSelezionate.size) { alert("Seleziona almeno una LP"); return; }
+  const lpIds = Array.from(lpSelezionate);
+  const res = await fetch(`${API}/api/camion/assegna`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome, tablet_id: tabletId, lp_ids: lpIds })
+  });
+  if (!res.ok) { alert("Errore durante l'invio del camion al tablet"); return; }
+  lpIds.forEach(lpId => {
+    if (lpMap[lpId]) { lpMap[lpId].stato = "inviato_tablet"; lpMap[lpId].tablet_id = tabletId; lpMap[lpId].camion_nome = nome; }
+  });
+  lpSelezionate.clear();
+  document.getElementById("camion-nome").value = "";
+  render();
+}
+
+// ---------- Sezione "Da approvare" (non piu' un popup) ----------
+function renderApprovazione() {
+  const items = Object.values(lpMap)
+    .filter(lp => lp.stato === "in_attesa_approvazione")
+    .sort((a, b) => (a.data_creazione || "").localeCompare(b.data_creazione || ""));
+
+  const cont = document.getElementById("lista-approvazione");
+  const vuoto = document.getElementById("approvazione-vuoto");
+
+  if (!items.length) {
+    cont.innerHTML = "";
+    vuoto.style.display = "block";
+    return;
+  }
+  vuoto.style.display = "none";
+
+  cont.innerHTML = items.map(lp => `
+    <div class="card-approvazione">
+      <div class="riga-top">
+        <div>
+          <h3>LP ${lp.numero || lp.lp_id}</h3>
+          <div class="cliente">${lp.cliente_nome || lp.cliente_destinazione || ""} · ${formattaData(lp.data_creazione)}</div>
+        </div>
+        <button class="btn-secondario" onclick="apriArticoli('${lp.lp_id}')">Vedi articoli</button>
+      </div>
+      ${lp.nota_magazziniere ? `<div class="nota"><strong>Nota magazziniere:</strong> ${lp.nota_magazziniere}</div>` : ""}
+      <div class="azioni">
+        <button class="btn-danger" onclick="rifiutaLP('${lp.lp_id}')">Rifiuta</button>
+        <button class="btn-success" onclick="approvaLP('${lp.lp_id}')">Approva e scrivi su ARCA</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function approvaLP(lpId) {
+  const res = await fetch(`${API}/api/lp/${lpId}/approva`, { method: "POST" });
+  const esito = await res.json();
+  if (esito.esito === "ok") {
+    if (lpMap[lpId]) lpMap[lpId].stato = "confermato";
+    render();
+    renderApprovazione();
+  } else {
+    alert("Errore nella scrittura su ARCA: " + (esito.dettaglio || "errore sconosciuto"));
+  }
+}
+
+async function rifiutaLP(lpId) {
+  const motivo = prompt("Motivo del rifiuto (facoltativo, lo vedrà il magazziniere):", "") || "";
+  await fetch(`${API}/api/lp/${lpId}/rifiuta`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ testo: motivo })
+  });
+  if (lpMap[lpId]) lpMap[lpId].stato = "inviato_tablet";
+  render();
+  renderApprovazione();
+}
+
+// ---------- Sezione tablet ----------
+function renderTablet() {
+  const cont = document.getElementById("lista-tablet");
+  const vuoto = document.getElementById("tablet-vuoto");
+  if (!tablets.length) {
+    cont.innerHTML = "";
+    vuoto.style.display = "block";
+    return;
+  }
+  vuoto.style.display = "none";
+  fetch(`${API}/api/ufficio/camion`).then(res => res.json()).then(camion => {
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+    cont.innerHTML = tablets.map(t => {
+      const assegnati = camion.filter(c => c.tablet_id === t.id);
+      return `
+        <div class="card-tablet">
+          <div class="tablet-monitor-head">
+            <div class="tablet-nome">${esc(t.nome)} ${t.id === tabletPredefinitoId ? "<span class='nav-badge'>Predefinito</span>" : ""}</div>
+            <div class="tablet-stato"><span class="dot" style="background:${t.online ? 'var(--good)' : '#c6c9d0'}"></span>${t.online ? "Online" : "Offline"}</div>
+            <button class="btn-secondario" onclick="apriModificaTablet('${encodeURIComponent(t.id)}')">Modifica nome</button>
+          </div>
+          ${assegnati.map(c => `
+            <div class="monitor-camion">
+              <h4>🚚 ${esc(c.nome)}</h4>
+              ${c.lp.map(lp => `<div class="monitor-lp">LP ${esc(lp.numero || lp.lp_id)} · ${esc(lp.cliente_nome || lp.cliente_destinazione || "Cliente non indicato")} · ${lp.stato === "in_attesa_approvazione" ? "In approvazione" : "Sul tablet"}</div>`).join("")}
+            </div>
+          `).join("") || `<div class="monitor-camion monitor-lp">Nessun camion assegnato</div>`}
+        </div>
+      `;
+    }).join("");
+  }).catch(() => { cont.textContent = "Impossibile caricare il riepilogo dei camion."; });
+}
+
+let tabletDaModificare = null;
+
+function apriModificaTablet(tabletIdCodificato) {
+  tabletDaModificare = decodeURIComponent(tabletIdCodificato);
+  const tablet = tablets.find(t => t.id === tabletDaModificare);
+  if (!tablet) return;
+  document.getElementById("tablet-edit-name").value = tablet.nome;
+  document.getElementById("tablet-edit-overlay").style.display = "flex";
+}
+
+function chiudiModificaTablet() {
+  document.getElementById("tablet-edit-overlay").style.display = "none";
+  tabletDaModificare = null;
+}
+
+async function salvaModificaTablet() {
+  if (!tabletDaModificare) return;
+  const nome = document.getElementById("tablet-edit-name").value.trim();
+  if (!nome) { alert("Inserisci il nome del tablet"); return; }
+  const res = await fetch(`${API}/api/tablets/${encodeURIComponent(tabletDaModificare)}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: tabletDaModificare, nome })
+  });
+  if (!res.ok) { alert("Errore durante la modifica del tablet"); return; }
+  chiudiModificaTablet();
+  await caricaTablet();
+  await caricaImpostazioni();
+  renderTablet();
+}
+
+// ---------- Pannello articoli (visualizza/modifica anche da ufficio) ----------
+let lpArticoliCorrente = null;
+
+async function apriArticoli(lpId) {
+  const res = await fetch(`${API}/api/lp/${lpId}`);
+  if (!res.ok) { alert("Errore nel caricare gli articoli"); return; }
+  lpArticoliCorrente = await res.json();
+
+  const info = lpMap[lpId] || {};
+  document.getElementById("articoli-titolo").textContent = `Articoli LP ${info.numero || lpId}`;
+  document.getElementById("articoli-meta").textContent = info.cliente_nome || info.cliente_destinazione || "";
+
+  const noteHtml = [];
+  if (lpArticoliCorrente.nota_arca) noteHtml.push(`<strong>Note ufficio (ARCA):</strong> ${lpArticoliCorrente.nota_arca}`);
+  if (lpArticoliCorrente.nota_magazziniere) noteHtml.push(`<strong>Nota magazziniere:</strong> ${lpArticoliCorrente.nota_magazziniere}`);
+  document.getElementById("articoli-note").innerHTML = noteHtml.join("<br>");
+  document.getElementById("articoli-note").style.display = noteHtml.length ? "block" : "none";
+
+  renderArticoli();
+  document.getElementById("articoli-overlay").style.display = "flex";
+}
+
+function renderArticoli() {
+  const tbody = document.getElementById("articoli-righe");
+  tbody.innerHTML = lpArticoliCorrente.righe.map(r => {
+    const haColli = r.metri_per_collo && r.metri_per_collo > 0;
+    const colli = haColli ? (r.quantita_corrente / r.metri_per_collo) : null;
+    return `
+    <tr class="${r.eliminata ? 'riga-eliminata' : ''}">
+      <td>${r.articolo_codice || ""}</td>
+      <td>${r.articolo_descrizione || ""}</td>
+      <td>
+        ${haColli ? `
+          <input class="qty" type="number" step="any" value="${colli}"
+                ${r.eliminata ? "disabled" : ""}
+                onchange="modificaColliArticolo('${r.riga_id_arca}', this.value, ${r.metri_per_collo})">
+          <div class="sub-metri">${r.quantita_corrente} m</div>
+        ` : `
+          <input class="qty" type="number" step="any" value="${r.quantita_corrente}"
+                ${r.eliminata ? "disabled" : ""}
+                onchange="modificaQuantitaArticolo('${r.riga_id_arca}', this.value)">
+          <div class="sub-metri">metri (colli non disponibili)</div>
+        `}
+      </td>
+      <td>
+        <input type="text" style="width:140px; padding:6px; border-radius:6px; border:1px dashed var(--line);"
+               value="${(r.nota_riga || '').replace(/"/g,'&quot;')}" placeholder="Nota..."
+               ${r.eliminata ? "disabled" : ""}
+               onchange="modificaNotaRigaArticolo('${r.riga_id_arca}', this.value)">
+      </td>
+      <td>${r.eliminata ? "" : `<button class="btn-danger" onclick="eliminaRigaArticolo('${r.riga_id_arca}')">Elimina</button>`}</td>
+    </tr>
+  `;
+  }).join("");
+}
+
+async function modificaColliArticolo(rigaId, valoreColli, metriPerCollo) {
+  const nuoviMetri = parseFloat(valoreColli) * metriPerCollo;
+  await modificaQuantitaArticolo(rigaId, nuoviMetri);
+  renderArticoli();
+}
+
+async function modificaQuantitaArticolo(rigaId, valore) {
+  const lpId = lpArticoliCorrente.lp_id;
+  await fetch(`${API}/api/lp/${lpId}/riga/${rigaId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ quantita: parseFloat(valore) })
+  });
+  const r = lpArticoliCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.quantita_corrente = parseFloat(valore);
+}
+
+async function modificaNotaRigaArticolo(rigaId, testo) {
+  const lpId = lpArticoliCorrente.lp_id;
+  await fetch(`${API}/api/lp/${lpId}/riga/${rigaId}/nota`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ testo })
+  });
+  const r = lpArticoliCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.nota_riga = testo;
+}
+
+async function eliminaRigaArticolo(rigaId) {
+  const lpId = lpArticoliCorrente.lp_id;
+  await fetch(`${API}/api/lp/${lpId}/riga/${rigaId}`, { method: "DELETE" });
+  const r = lpArticoliCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.eliminata = true;
+  renderArticoli();
+}
+
+function chiudiArticoli() {
+  document.getElementById("articoli-overlay").style.display = "none";
+  lpArticoliCorrente = null;
+}
+
+async function assegna(lpId) {
+  const sel = document.getElementById(`sel-${lpId}`);
+  if (!sel.value) { alert("Seleziona un tablet"); return; }
+  await _assegnaTablet(lpId, sel.value);
+}
+
+async function reinvia(lpId, tabletId) {
+  await _assegnaTablet(lpId, tabletId);
+}
+
+async function _assegnaTablet(lpId, tabletId) {
+  const res = await fetch(`${API}/api/lp/${lpId}/assegna`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tablet_id: tabletId })
+  });
+  if (res.ok) {
+    lpMap[lpId].stato = "inviato_tablet";
+    lpMap[lpId].tablet_id = tabletId;
+    render();
+  } else {
+    alert("Errore nell'invio al tablet");
+  }
+}
+
+async function caricaLpIniziali() {
+  const res = await fetch(`${API}/api/lp/nuovi`);
+  const lp = await res.json();
+  lp.forEach(item => lpMap[item.lp_id] = item);
+  render();
+}
+
+// ---------- Popup automatico per nuovi LP (invariato) ----------
+let codaPopup = [];
+let popupAttivo = null;
+
+function accodaPopup(lp) {
+  codaPopup.push(lp);
+  avvisaNuovoLP(lp);
+  if (!popupAttivo) mostraProssimoPopup();
+}
+
+function mostraProssimoPopup() {
+  if (!codaPopup.length) { popupAttivo = null; return; }
+  popupAttivo = codaPopup.shift();
+
+  document.getElementById("popup-titolo").textContent = `Nuova LP ${popupAttivo.numero || popupAttivo.lp_id}`;
+  document.getElementById("popup-meta").textContent =
+    (popupAttivo.cliente_nome || popupAttivo.cliente_destinazione || "Cliente non disponibile") +
+    (popupAttivo.data_creazione ? " · " + formattaData(popupAttivo.data_creazione) : "");
+
+  document.getElementById("popup-scelta").style.display = "flex";
+  document.getElementById("popup-invia-area").classList.remove("visibile");
+  document.getElementById("popup-camion-nome").value = "";
+
+  document.getElementById("popup-tablet-destinazione").textContent = tabletPredefinitoNome
+    ? `Invio al tablet predefinito: ${tabletPredefinitoNome}`
+    : "Imposta prima un tablet predefinito nelle Impostazioni.";
+
+  document.getElementById("popup-overlay").style.display = "flex";
+}
+
+function chiudiPopup() {
+  document.getElementById("popup-overlay").style.display = "none";
+  mostraProssimoPopup();
+}
+
+function popupNo() { chiudiPopup(); }
+
+function popupSi() {
+  document.getElementById("popup-scelta").style.display = "none";
+  document.getElementById("popup-invia-area").classList.add("visibile");
+}
+
+async function popupInvia() {
+  const nomeCamion = document.getElementById("popup-camion-nome").value.trim();
+  if (!tabletPredefinitoId) { alert("Configura prima il tablet predefinito nelle Impostazioni"); return; }
+  if (!nomeCamion) { alert("Inserisci il nome del camion"); return; }
+  const lpId = popupAttivo.lp_id;
+  const res = await fetch(`${API}/api/camion/assegna`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome: nomeCamion, tablet_id: tabletPredefinitoId, lp_ids: [lpId] })
+  });
+  if (res.ok) {
+    if (lpMap[lpId]) {
+      lpMap[lpId].stato = "inviato_tablet";
+      lpMap[lpId].tablet_id = tabletPredefinitoId;
+      lpMap[lpId].camion_nome = nomeCamion;
+      render();
+    }
+    chiudiPopup();
+  } else {
+    alert("Errore nell'invio al tablet");
+  }
+}
+
+// Notifica del browser + suono se la scheda non e' in primo piano (usata sia
+// per i nuovi LP che per le richieste di approvazione)
+let permessoNotificheChiesto = false;
+function avvisaNuovoLP(lp, testo) {
+  suonaAvviso();
+  if (document.hidden) {
+    if (!permessoNotificheChiesto && "Notification" in window) {
+      permessoNotificheChiesto = true;
+      Notification.requestPermission();
+    }
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(testo || "Nuova Lista di Prelievo", {
+        body: `LP ${lp.numero || lp.lp_id} - ${lp.cliente_nome || lp.cliente_destinazione || ""}`,
+      });
+    }
+  }
+}
+
+function suonaAvviso() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch (e) { /* browser potrebbe bloccare audio senza interazione utente */ }
+}
+
+function connettiWebSocket() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws/office`);
+  ws.onopen = () => {
+    document.getElementById("status-testo").textContent = "Connesso";
+    document.getElementById("status").classList.add("on");
+  };
+  ws.onclose = () => {
+    document.getElementById("status-testo").textContent = "Disconnesso, riconnessione...";
+    document.getElementById("status").classList.remove("on");
+    setTimeout(connettiWebSocket, 3000);
+  };
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.tipo === "nuovi_lp") {
+      msg.lp.forEach(item => {
+        const lp = { ...item, stato: "nuovo" };
+        lpMap[item.lp_id] = lp;
+        accodaPopup(lp);
+      });
+      render();
+    } else if (msg.tipo === "camion_inviato") {
+      (msg.camion.lp_ids || []).forEach(lpId => {
+        if (lpMap[lpId]) {
+          lpMap[lpId].stato = "inviato_tablet";
+          lpMap[lpId].tablet_id = msg.camion.tablet_id;
+          lpMap[lpId].camion_id = msg.camion.id;
+          lpMap[lpId].camion_nome = msg.camion.nome;
+        }
+      });
+      render();
+      renderApprovazione();
+      if (document.getElementById("vista-tablet").style.display !== "none") renderTablet();
+    } else if (msg.tipo === "lp_confermato") {
+      if (lpMap[msg.lp_id]) lpMap[msg.lp_id].stato = "confermato";
+      render();
+      if (document.getElementById("vista-tablet").style.display !== "none") renderTablet();
+    } else if (msg.tipo === "richiesta_approvazione") {
+      lpMap[msg.lp.lp_id] = { ...lpMap[msg.lp.lp_id], ...msg.lp, stato: "in_attesa_approvazione" };
+      avvisaNuovoLP(lpMap[msg.lp.lp_id], "LP da approvare");
+      render();
+      renderApprovazione();
+      if (document.getElementById("vista-tablet").style.display !== "none") renderTablet();
+    } else if (msg.tipo === "lp_aggiornato") {
+      // aggiornamento righe in tempo reale mentre il magazziniere lavora (facoltativo da mostrare)
+    }
+  };
+  setInterval(() => { if (ws.readyState === 1) ws.send("ping"); }, 25000);
+}
+
+(async function init() {
+  await caricaTablet();
+  await caricaImpostazioni();
+  await caricaLpIniziali();
+  connettiWebSocket();
+})();
+</script>
+</body>
+</html>

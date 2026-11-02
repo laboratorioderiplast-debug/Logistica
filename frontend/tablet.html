@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Magazziniere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#14171c; --paper:#f6f5f2; --panel:#ffffff; --line:#e2e0da;
+    --muted:#767b84; --accent:#e8622c; --accent-dark:#c34f1f;
+    --good:#2f9e58; --danger:#d64545; --warn:#b8860b;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:var(--paper); color:var(--ink);
+    min-height:100vh; padding-bottom:110px;
+  }
+  h1,h2,h3, .label { font-family:"Space Grotesk", sans-serif; }
+
+  header {
+    background:var(--ink); color:white; padding:16px 18px;
+    position:sticky; top:0; z-index:20;
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(110px,1fr);
+    align-items:center; gap:12px;
+  }
+  header .titolo-blocco { min-width:0; text-align:left; }
+  header .titolo-blocco h1 { margin:0; font-size:16px; font-weight:600; overflow-wrap:anywhere; }
+  .account-intestazione { display:flex; align-items:center; gap:8px; }
+  .account-modifica { padding:5px 8px; border:1px solid #60656d; border-radius:7px; background:transparent; color:#fff; font-size:11px; }
+  .account-modifica:hover { background:#30343b; }
+  header .cliente-lp { min-width:0; color:#fff; font-size:24px; font-weight:700; line-height:1.25; text-align:center; display:flex; justify-content:center; align-items:center; flex-wrap:wrap; column-gap:12px; }
+  .cliente-lp-nome { min-width:0; overflow-wrap:anywhere; }
+  .cliente-lp-numero { white-space:nowrap; }
+  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .dot.on { background:var(--good); } .dot.off { background:#6b7178; }
+  #status-pill { justify-self:end; font-size:11px; color:#c7cad0; display:flex; align-items:center; white-space:nowrap; }
+
+  @media (max-width:520px) {
+    header { grid-template-columns:minmax(0,1fr) auto; padding:12px 14px; gap:8px; }
+    header .cliente-lp { grid-column:1 / -1; grid-row:2; font-size:21px; }
+    #status-pill { grid-column:2; grid-row:1; }
+  }
+
+  main { max-width:720px; margin:0 auto; padding:14px; }
+
+  .setup { background:var(--panel); border-radius:14px; padding:22px; margin-top:16px; border:1px solid var(--line); }
+  .setup p { margin-top:0; color:var(--muted); font-size:14px; }
+  .setup input { font-size:16px; padding:13px; border-radius:9px; border:1.5px solid var(--line); width:100%; margin-top:8px; }
+  .setup button { margin-top:14px; }
+
+  .empty { text-align:center; color:var(--muted); padding:80px 20px; font-size:15px; }
+
+  .nota-box { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .nota-box .label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:4px; }
+  .nota-box .testo { font-size:14px; white-space:pre-wrap; }
+
+  .card-articolo {
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:14px; margin-bottom:10px; border-left:4px solid var(--ink);
+  }
+  .card-articolo.eliminata { border-left-color:var(--danger); opacity:.5; }
+  .riga-top { display:flex; justify-content:space-between; gap:10px; }
+  .codice { font-family:"Space Grotesk", monospace; font-size:12px; color:var(--muted); letter-spacing:.02em; }
+  .descrizione { font-size:14px; font-weight:600; margin-top:2px; line-height:1.3; }
+  .del-icon {
+    background:none; border:1px solid var(--danger); color:var(--danger);
+    width:34px; height:34px; border-radius:8px; font-size:16px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .check-caricata {
+    display:flex; align-items:center; gap:8px; flex-shrink:0; cursor:pointer;
+    border:2px solid var(--line); background:white; border-radius:10px;
+    padding:8px 14px; font-size:13px; font-weight:700; color:var(--muted);
+  }
+  .check-caricata .box { width:24px; height:24px; border-radius:7px; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:16px; color:transparent; flex-shrink:0; }
+  .check-caricata.on { background:#eafaf0; border-color:var(--good); color:var(--good); }
+  .check-caricata.on .box { background:var(--good); border-color:var(--good); color:white; }
+  .card-articolo.caricata { background:#f4faf6; border-left-color:var(--good); }
+  .card-articolo.caricata .descrizione, .card-articolo.caricata .codice { opacity:.75; }
+
+  .quantita-blocco { display:flex; gap:16px; margin-top:12px; align-items:flex-end; }
+  .stat { flex:1; }
+  .stat .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+  .stat input {
+    width:100%; font-size:22px; font-weight:700; font-family:"Space Grotesk", sans-serif;
+    padding:8px 10px; border-radius:9px; border:1.5px solid var(--line); color:var(--ink);
+  }
+  .stat input:focus { outline:none; border-color:var(--accent); }
+  .stat .sub { font-size:12px; color:var(--muted); margin-top:4px; }
+  .stat.readonly-metri .valore { font-size:20px; font-weight:600; padding:8px 0; }
+
+  .nota-riga { margin-top:12px; }
+  .nota-riga .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+  .nota-riga input {
+    width:100%; font-size:15px; padding:11px 12px; border-radius:9px;
+    border:1.5px solid var(--accent); background:#fff6f1; font-weight:500;
+  }
+  .nota-riga input::placeholder { color:#b9906f; font-weight:400; }
+  .nota-riga input:focus { outline:none; border-color:var(--accent-dark); background:white; box-shadow:0 0 0 3px rgba(232,98,44,0.15); }
+  .nota-riga input:disabled { border-color:var(--line); background:#f5f4f2; color:var(--muted); }
+
+  footer.barra-invio {
+    position:fixed; bottom:0; left:0; right:0; background:var(--panel);
+    border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  button.primario {
+    width:100%; padding:16px; font-size:16px; font-weight:700; font-family:"Space Grotesk", sans-serif;
+    background:var(--accent); color:white; border:none; border-radius:11px; cursor:pointer;
+  }
+  button.primario:disabled { background:#c9cbcf; }
+  button.secondario {
+    padding:11px 16px; font-size:14px; border-radius:9px; border:1.5px solid var(--line);
+    background:white; color:var(--ink); cursor:pointer; font-weight:600;
+  }
+  .barra-secondaria { display:flex; gap:8px; margin-bottom:12px; }
+  .barra-secondaria button { flex:1; }
+  .btn-inoltra {
+    background:white; border:2px solid var(--accent); color:var(--accent-dark);
+    padding:13px 16px; font-size:15px; font-weight:700; border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-inoltra:active { background:#fff1ea; }
+  .inoltra-pannello { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px; display:none; }
+  .inoltra-pannello.visibile { display:block; }
+  .inoltra-pannello select { width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); margin-bottom:8px; font-size:14px; }
+  .inoltra-pannello .riga-bottoni { display:flex; gap:8px; }
+  .inoltra-pannello .riga-bottoni button { flex:1; padding:10px; }
+
+  .banner-attesa {
+    background:#fff7ea; border:1px solid #eecf8e; color:#8a6416;
+    border-radius:12px; padding:16px; text-align:center; margin-bottom:14px; font-size:14px;
+  }
+  .tablet-edit-overlay { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(17,24,39,.55); }
+  .tablet-edit-box { width:100%; max-width:420px; padding:22px; border-radius:14px; background:white; box-shadow:0 12px 32px rgba(0,0,0,.25); }
+  .tablet-edit-box h2 { margin:0 0 16px; }
+  .tablet-edit-box label { display:block; margin-top:12px; font-size:13px; font-weight:700; }
+  .tablet-edit-box input { width:100%; padding:11px; margin-top:5px; border:1px solid var(--line); border-radius:8px; font-size:16px; }
+  .tablet-edit-actions { display:flex; gap:8px; margin-top:18px; }
+  .tablet-edit-actions button { flex:1; }
+  .banner-attesa strong { display:block; font-family:"Space Grotesk", sans-serif; font-size:15px; margin-bottom:4px; }
+  .banner-rifiutato {
+    background:#fdecec; border:1px solid #f3b9b9; color:#8a2020;
+    border-radius:12px; padding:16px; margin-bottom:14px; font-size:14px;
+  }
+  .camion-card, .lp-camion-riga { width:100%; text-align:left; background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:10px; white-space:normal; }
+  .camion-card { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:18px; transition:background .15s ease, border-color .15s ease; }
+  .camion-card.pronto { background:#eafaf0; border-color:#83c99b; }
+  .camion-card.parziale { background:#fff7df; border-color:#e9c75f; }
+  .camion-card.non-pronto { background:#fdecec; border-color:#e5a0a0; }
+  .camion-card .cartella { font-size:28px; }
+  .camion-card .camion-meta { display:block; color:var(--muted); font-size:13px; margin-top:4px; }
+  .camion-card .camion-stato { display:block; color:var(--muted); font-size:12px; font-weight:700; margin-top:3px; }
+  .camion-card .camion-stato.pronto, .lp-camion-riga .lp-stato.pronto { color:var(--good); }
+  .camion-card .camion-stato.parziale { color:#8a6416; }
+  .camion-card .camion-stato.non-pronto { color:#a32b2b; }
+  .camion-riga-titolo { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:8px 0 14px; }
+  .camion-riga-titolo h2 { margin:0; }
+  .camion-assegnatario { margin:-8px 0 12px; color:var(--muted); font-size:13px; }
+  .lp-camion-riga { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .lp-camion-riga.pronto { background:#eafaf0; border-color:#83c99b; }
+  .lp-camion-riga .lp-dati { min-width:0; }
+  .lp-camion-riga .lp-cliente { display:block; color:var(--muted); font-size:13px; margin-top:4px; }
+  .lp-camion-riga .lp-stato { flex-shrink:0; color:var(--accent-dark); font-size:12px; font-weight:700; }
+  .navigazione-lp { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .navigazione-lp button { min-width:112px; padding:12px 10px; }
+  .navigazione-lp button:disabled { opacity:.45; }
+  #lp-contatore { color:var(--muted); font-size:13px; font-weight:700; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <div class="titolo-blocco">
+    <div class="account-intestazione">
+      <h1 id="titolo">Magazziniere</h1>
+      <button class="account-modifica" onclick="apriModificaTablet()">Modifica</button>
+    </div>
+  </div>
+  <div class="cliente-lp" id="header-cliente"></div>
+  <div id="status-pill"><span class="dot off" id="status-dot"></span><span id="status-testo">Connessione...</span></div>
+</header>
+
+<main>
+  <div id="setup" class="setup" style="display:none">
+    <p>Nessun tablet registrato su questo dispositivo. Inserisci nome e ID (es. tablet-01):</p>
+    <input id="input-nome" placeholder="Nome (es. Tablet Magazzino 1)">
+    <input id="input-id" placeholder="ID (es. tablet-01)">
+    <button class="primario" onclick="registraTablet()">Registra questo tablet</button>
+  </div>
+
+  <div id="vuoto" class="empty" style="display:none">In attesa di un LP dall'ufficio...</div>
+
+  <div id="camion-lista-area" style="display:none">
+    <h2>Camion assegnati</h2>
+    <div id="camion-lista"></div>
+    <div id="camion-vuoto" class="empty" style="display:none">In attesa di un camion dall'ufficio...</div>
+  </div>
+
+  <div id="camion-dettaglio-area" style="display:none">
+    <div class="camion-riga-titolo">
+      <h2 id="camion-dettaglio-titolo"></h2>
+      <button class="secondario" onclick="tornaAiCamion()">← Camion</button>
+    </div>
+    <div class="camion-assegnatario" id="camion-assegnatario"></div>
+    <div class="barra-secondaria" id="inoltra-camion-area">
+      <button class="btn-inoltra" id="btn-inoltra-camion" onclick="toggleInoltra()">↪&nbsp; Inoltra tutto il camion</button>
+    </div>
+    <div class="inoltra-pannello" id="inoltra-pannello">
+      <select id="inoltra-select-tablet"><option value="">Scegli tablet...</option></select>
+      <div class="riga-bottoni">
+        <button class="secondario" onclick="toggleInoltra()">Annulla</button>
+        <button class="primario" id="btn-conferma-inoltro" style="flex:1;" onclick="inoltraCamion()">Inoltra camion</button>
+      </div>
+    </div>
+    <div id="lp-lista-camion"></div>
+  </div>
+
+  <div id="lp-area" style="display:none">
+    <div style="margin-bottom:12px"><button class="secondario" onclick="tornaAlCamion()">← Torna agli LP del camion</button></div>
+    <div id="banner-sola-lettura" class="banner-attesa" style="display:none">Visualizzazione di sola lettura: questo camion è in carico a un altro tablet.</div>
+    <div class="navigazione-lp" id="navigazione-lp" style="display:none">
+      <button class="secondario" id="lp-precedente" onclick="cambiaLP(-1)">← Precedente</button>
+      <span id="lp-contatore"></span>
+      <button class="secondario" id="lp-successivo" onclick="cambiaLP(1)">Successivo →</button>
+    </div>
+    <div id="banner-attesa" class="banner-attesa" style="display:none">
+      <strong>In attesa di approvazione</strong>
+      L'ufficio sta verificando le modifiche prima di inviarle ad ARCA.
+    </div>
+    <div id="banner-rifiutato" class="banner-rifiutato" style="display:none">
+      <strong style="font-family:'Space Grotesk',sans-serif; display:block; margin-bottom:4px;">Rimandato indietro dall'ufficio</strong>
+      <span id="motivo-rifiuto"></span>
+    </div>
+
+    <div class="nota-box" id="note-arca-box" style="display:none">
+      <div class="label">Note ufficio</div>
+      <div class="testo" id="note-arca-testo"></div>
+    </div>
+
+    <div id="righe"></div>
+
+    <div class="nota-box" style="border-left-color:var(--ink);">
+      <div class="label">Nota magazziniere</div>
+      <input id="nota-magazziniere" style="width:100%; border:none; background:transparent; font-size:14px; padding:4px 0;"
+             placeholder="Scrivi qui eventuali annotazioni..." onchange="salvaNotaMagazziniere(this.value)">
+    </div>
+  </div>
+</main>
+
+<footer class="barra-invio" id="barra-invio" style="display:none">
+  <button class="primario" id="btn-invia" onclick="inviaCamionAllUfficio()">Invia camion all'ufficio</button>
+</footer>
+
+<div class="tablet-edit-overlay" id="tablet-edit-overlay" style="display:none">
+  <div class="tablet-edit-box">
+    <h2>Modifica registrazione tablet</h2>
+    <label for="tablet-edit-nome">Nome tablet</label>
+    <input id="tablet-edit-nome" autocomplete="off">
+    <label for="tablet-edit-id">ID tablet</label>
+    <input id="tablet-edit-id" autocomplete="off">
+    <div class="tablet-edit-actions">
+      <button class="secondario" onclick="chiudiModificaTablet()">Annulla</button>
+      <button class="primario" onclick="salvaModificaTablet()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "";
+let tabletId = localStorage.getItem("tablet_id");
+let tabletNome = localStorage.getItem("tablet_nome");
+let lpCorrente = null;
+let lpRicevuti = [];
+let indiceLP = 0;
+let camionRicevuti = [];
+let camionCorrente = null;
+let isTabletPredefinito = false;
+let tabletPredefinitoId = null;
+let solaLettura = false;
+
+function escapeHTML(valore) {
+  return String(valore ?? "").replace(/[&<>"']/g, carattere => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[carattere]);
+}
+
+function lpPronta(lp) {
+  const righeDaCaricare = (lp.righe || []).filter(riga => !riga.eliminata);
+  return righeDaCaricare.length > 0 && righeDaCaricare.every(riga => riga.caricata);
+}
+
+function statoLPNelCamion(lp) {
+  if (lp.stato === "in_attesa_approvazione") return "In approvazione";
+  return lpPronta(lp) ? "Pronto" : "Da preparare";
+}
+
+function statoCamion(camion) {
+  if (camion.lp.length && camion.lp.every(lp => lp.stato === "in_attesa_approvazione")) return "In approvazione";
+  return camion.lp.length && camion.lp.every(lp => lpPronta(lp)) ? "Pronto" : "Da preparare";
+}
+
+function classeProntezzaCamion(camion) {
+  const pronte = camion.lp.filter(lp => lpPronta(lp)).length;
+  if (pronte === 0) return "non-pronto";
+  return pronte === camion.lp.length ? "pronto" : "parziale";
+}
+
+function renderListaCamion() {
+  document.getElementById("camion-lista-area").style.display = "block";
+  document.getElementById("camion-dettaglio-area").style.display = "none";
+  document.getElementById("lp-area").style.display = "none";
+  document.getElementById("barra-invio").style.display = "none";
+  document.getElementById("vuoto").style.display = "none";
+  document.getElementById("header-cliente").replaceChildren();
+  document.getElementById("titolo").textContent = tabletNome || "Magazziniere";
+  document.getElementById("camion-vuoto").style.display = camionRicevuti.length ? "none" : "block";
+  document.getElementById("camion-lista").innerHTML = camionRicevuti.map(camion => `
+    <button class="camion-card ${classeProntezzaCamion(camion)}" onclick="apriCamion('${encodeURIComponent(camion.id)}')">
+      <span><span class="cartella">🚚</span> ${escapeHTML(camion.nome)}<span class="camion-meta">${camion.lp.length} LP</span>${isTabletPredefinito ? `<span class="camion-meta">In carico a: ${escapeHTML(camion.tablet_nome || camion.tablet_id || "Tablet")}</span>` : ""}<span class="camion-stato ${classeProntezzaCamion(camion)}">${statoCamion(camion)}</span></span>
+      <span aria-hidden="true">›</span>
+    </button>
+  `).join("");
+}
+
+function apriCamion(camionId) {
+  camionId = decodeURIComponent(camionId);
+  camionCorrente = camionRicevuti.find(camion => camion.id === camionId) || null;
+  if (!camionCorrente) return renderListaCamion();
+  lpRicevuti = camionCorrente.lp;
+  indiceLP = 0;
+  lpCorrente = null;
+  renderDettaglioCamion();
+}
+
+function renderDettaglioCamion() {
+  if (!camionCorrente) return renderListaCamion();
+  lpCorrente = null;
+  document.getElementById("camion-lista-area").style.display = "none";
+  document.getElementById("camion-dettaglio-area").style.display = "block";
+  document.getElementById("lp-area").style.display = "none";
+  document.getElementById("barra-invio").style.display = "none";
+  document.getElementById("camion-dettaglio-titolo").textContent = camionCorrente.nome;
+  document.getElementById("camion-assegnatario").textContent = isTabletPredefinito
+    ? `In carico a: ${camionCorrente.tablet_nome || camionCorrente.tablet_id || "Tablet"}`
+    : "";
+  solaLettura = Boolean(isTabletPredefinito && camionCorrente.tablet_id !== tabletId);
+  document.getElementById("banner-sola-lettura").style.display = solaLettura ? "block" : "none";
+  document.getElementById("inoltra-camion-area").style.display = camionCorrente.id === "senza-camion" ? "none" : "flex";
+  document.getElementById("btn-inoltra-camion").textContent = isTabletPredefinito
+    ? "↪ Assegna camion a un altro tablet"
+    : "↩ Restituisci camion al tablet predefinito";
+  document.getElementById("btn-conferma-inoltro").textContent = isTabletPredefinito
+    ? "Assegna camion"
+    : "Restituisci al predefinito";
+  document.getElementById("inoltra-pannello").classList.remove("visibile");
+  document.getElementById("titolo").textContent = tabletNome || "Magazziniere";
+  document.getElementById("header-cliente").replaceChildren();
+  document.getElementById("lp-lista-camion").innerHTML = lpRicevuti.map(lp => `
+    <button class="lp-camion-riga ${lpPronta(lp) ? "pronto" : ""}" onclick="apriLP('${encodeURIComponent(lp.lp_id)}')">
+      <span class="lp-dati"><strong>LP ${escapeHTML(lp.numero || lp.lp_id)}</strong><span class="lp-cliente">${escapeHTML(lp.cliente_nome || lp.cliente_destinazione || "Cliente non indicato")}</span></span>
+      <span class="lp-stato ${statoLPNelCamion(lp) === "Pronto" ? "pronto" : ""}">${statoLPNelCamion(lp)} ›</span>
+    </button>
+  `).join("");
+  aggiornaInvioCamionVista();
+}
+
+function aggiornaInvioCamionVista() {
+  const lpDaInviare = lpRicevuti.filter(lp => lp.stato === "inviato_tablet").length;
+  const tuttePronte = lpRicevuti.length > 0 && lpRicevuti.every(lp => lpPronta(lp));
+  const barra = document.getElementById("barra-invio");
+  barra.style.display = lpRicevuti.length && camionCorrente?.id !== "senza-camion" && camionCorrente?.tablet_id === tabletId ? "block" : "none";
+  const btn = document.getElementById("btn-invia");
+  btn.disabled = lpDaInviare === 0 || !tuttePronte;
+  btn.textContent = lpDaInviare === 0
+    ? "Camion inviato all'ufficio"
+    : !tuttePronte
+      ? "Completa tutte le LP per inviare"
+      : `Invia ${lpDaInviare} LP del camion all'ufficio`;
+}
+
+function apriLP(lpId) {
+  lpId = decodeURIComponent(lpId);
+  indiceLP = lpRicevuti.findIndex(lp => lp.lp_id === lpId);
+  if (indiceLP < 0) return;
+  selezionaLP();
+  document.getElementById("camion-lista-area").style.display = "none";
+  document.getElementById("camion-dettaglio-area").style.display = "none";
+  renderLP();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function tornaAiCamion() {
+  camionCorrente = null;
+  lpCorrente = null;
+  renderListaCamion();
+}
+
+function tornaAlCamion() {
+  if (camionCorrente) renderDettaglioCamion();
+  else renderListaCamion();
+}
+
+async function ricaricaCamion() {
+  try {
+    const gruppoId = camionCorrente?.id;
+    const lpIdCorrente = lpCorrente?.lp_id;
+    const eraDentroLP = Boolean(lpIdCorrente);
+    const impostazioniRes = await fetch(`${API}/api/impostazioni`);
+    const impostazioni = impostazioniRes.ok ? await impostazioniRes.json() : {};
+    tabletPredefinitoId = impostazioni.tablet_predefinito_id || null;
+    isTabletPredefinito = tabletPredefinitoId === tabletId;
+    const res = await fetch(`${API}/api/tablets/${tabletId}/camion`);
+    if (!res.ok) return;
+    camionRicevuti = await res.json();
+    if (!gruppoId) return renderListaCamion();
+    camionCorrente = camionRicevuti.find(camion => camion.id === gruppoId) || null;
+    if (!camionCorrente) { lpCorrente = null; return renderListaCamion(); }
+    lpRicevuti = camionCorrente.lp;
+    if (eraDentroLP) {
+      indiceLP = lpRicevuti.findIndex(lp => lp.lp_id === lpIdCorrente);
+      if (indiceLP < 0) { lpCorrente = null; return renderDettaglioCamion(); }
+      solaLettura = Boolean(isTabletPredefinito && camionCorrente.tablet_id !== tabletId);
+      selezionaLP();
+      renderLP();
+    } else renderDettaglioCamion();
+  } catch (e) { /* la riconnessione WebSocket riprovera' */ }
+}
+
+function selezionaLP() {
+  lpCorrente = lpRicevuti[indiceLP] || null;
+}
+
+function cambiaLP(delta) {
+  const nuovoIndice = indiceLP + delta;
+  if (nuovoIndice < 0 || nuovoIndice >= lpRicevuti.length) return;
+  indiceLP = nuovoIndice;
+  selezionaLP();
+  document.getElementById("banner-rifiutato").style.display = "none";
+  renderLP();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function aggiornaNavigazione() {
+  const nav = document.getElementById("navigazione-lp");
+  nav.style.display = lpRicevuti.length > 1 ? "flex" : "none";
+  document.getElementById("lp-contatore").textContent = `${indiceLP + 1} / ${lpRicevuti.length}`;
+  document.getElementById("lp-precedente").disabled = indiceLP === 0;
+  document.getElementById("lp-successivo").disabled = indiceLP >= lpRicevuti.length - 1;
+}
+
+function aggiungiOAggiornaLP(lp) {
+  const indice = lpRicevuti.findIndex(item => item.lp_id === lp.lp_id);
+  if (indice >= 0) lpRicevuti[indice] = { ...lpRicevuti[indice], ...lp };
+  else lpRicevuti.unshift(lp);
+  indiceLP = indice >= 0 ? indice : 0;
+  selezionaLP();
+}
+
+function rimuoviLP(lpId) {
+  const rimossoEraCorrente = lpCorrente && lpCorrente.lp_id === lpId;
+  const vecchioIndice = indiceLP;
+  lpRicevuti = lpRicevuti.filter(lp => lp.lp_id !== lpId);
+  if (rimossoEraCorrente) indiceLP = Math.min(vecchioIndice, lpRicevuti.length - 1);
+  else if (lpRicevuti.length && vecchioIndice > 0) indiceLP = vecchioIndice;
+  indiceLP = Math.max(0, indiceLP);
+  selezionaLP();
+}
+
+function mostraSetup() {
+  document.getElementById("setup").style.display = "block";
+}
+
+async function registraTablet() {
+  const nome = document.getElementById("input-nome").value.trim();
+  const id = document.getElementById("input-id").value.trim();
+  if (!nome || !id) { alert("Compila entrambi i campi"); return; }
+  await fetch(`${API}/api/tablets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, nome })
+  });
+  localStorage.setItem("tablet_id", id);
+  localStorage.setItem("tablet_nome", nome);
+  location.reload();
+}
+
+function apriModificaTablet() {
+  document.getElementById("tablet-edit-nome").value = tabletNome || "";
+  document.getElementById("tablet-edit-id").value = tabletId || "";
+  document.getElementById("tablet-edit-overlay").style.display = "flex";
+}
+
+function chiudiModificaTablet() {
+  document.getElementById("tablet-edit-overlay").style.display = "none";
+}
+
+async function salvaModificaTablet() {
+  const nome = document.getElementById("tablet-edit-nome").value.trim();
+  const nuovoId = document.getElementById("tablet-edit-id").value.trim();
+  if (!nome || !nuovoId) { alert("Inserisci il nome e l'ID del tablet"); return; }
+  const res = await fetch(`${API}/api/tablets/${encodeURIComponent(tabletId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: nuovoId, nome })
+  });
+  if (!res.ok) {
+    const errore = await res.json().catch(() => ({}));
+    alert(errore.detail || "Errore durante la modifica della registrazione");
+    return;
+  }
+  localStorage.setItem("tablet_id", nuovoId);
+  localStorage.setItem("tablet_nome", nome);
+  location.reload();
+}
+
+async function sincronizzaNomeTablet() {
+  try {
+    const res = await fetch(`${API}/api/tablets/${encodeURIComponent(tabletId)}`);
+    if (!res.ok) return;
+    const registrazione = await res.json();
+    tabletNome = registrazione.nome;
+    localStorage.setItem("tablet_nome", tabletNome);
+    document.getElementById("titolo").textContent = tabletNome;
+  } catch (e) { /* non blocca l'uso del tablet */ }
+}
+
+function renderLP() {
+  const area = document.getElementById("lp-area");
+  const vuoto = document.getElementById("vuoto");
+  const barra = document.getElementById("barra-invio");
+
+  if (!lpCorrente) {
+    area.style.display = "none";
+    barra.style.display = "none";
+    vuoto.style.display = "block";
+    document.getElementById("header-cliente").textContent = "";
+    aggiornaNavigazione();
+    return;
+  }
+  vuoto.style.display = "none";
+  area.style.display = "block";
+  barra.style.display = "none";
+  aggiornaNavigazione();
+
+  const cliente = lpCorrente.cliente_nome || lpCorrente.cliente_destinazione || "Cliente non indicato";
+  const numeroLP = lpCorrente.numero || lpCorrente.lp_id;
+  const intestazioneLP = document.getElementById("header-cliente");
+  const clienteVisibile = document.createElement("span");
+  clienteVisibile.className = "cliente-lp-nome";
+  clienteVisibile.textContent = `Cliente: ${cliente}`;
+  const numeroVisibile = document.createElement("span");
+  numeroVisibile.className = "cliente-lp-numero";
+  numeroVisibile.textContent = `LP ${numeroLP}`;
+  intestazioneLP.replaceChildren(clienteVisibile, numeroVisibile);
+
+  const inAttesa = lpCorrente.stato === "in_attesa_approvazione";
+  document.getElementById("banner-attesa").style.display = inAttesa ? "block" : "none";
+  document.getElementById("banner-sola-lettura").style.display = solaLettura ? "block" : "none";
+  const notaArcaBox = document.getElementById("note-arca-box");
+  if (lpCorrente.nota_arca) {
+    notaArcaBox.style.display = "block";
+    document.getElementById("note-arca-testo").textContent = lpCorrente.nota_arca;
+  } else {
+    notaArcaBox.style.display = "none";
+  }
+  document.getElementById("nota-magazziniere").value = lpCorrente.nota_magazziniere || "";
+
+  const cont = document.getElementById("righe");
+  cont.innerHTML = lpCorrente.righe.map(r => {
+    const haColli = r.metri_per_collo && r.metri_per_collo > 0;
+    const colli = haColli ? (r.quantita_corrente / r.metri_per_collo) : null;
+    const bloccata = r.caricata || inAttesa || solaLettura;
+    return `
+    <div class="card-articolo ${r.eliminata ? 'eliminata' : ''} ${r.caricata ? 'caricata' : ''}" data-riga="${r.riga_id_arca}">
+      <div class="riga-top">
+        <div>
+          <div class="codice">${r.articolo_codice}</div>
+          <div class="descrizione">${r.articolo_descrizione}</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-shrink:0; align-items:flex-start;">
+          <button class="check-caricata ${r.caricata ? 'on' : ''}" onclick="toggleCaricata('${r.riga_id_arca}', ${!r.caricata})" ${r.eliminata || solaLettura ? "disabled" : ""}>
+            <span class="box">✓</span><span>${r.caricata ? "Caricato" : "Da caricare"}</span>
+          </button>
+          ${r.eliminata ? "" : `<button class="del-icon" onclick="eliminaRiga('${r.riga_id_arca}')" ${bloccata ? "disabled" : ""}>✕</button>`}
+        </div>
+      </div>
+      <div class="quantita-blocco">
+        ${haColli ? `
+          <div class="stat">
+            <div class="label">Colli</div>
+            <input type="number" step="any" value="${colli}" ${r.eliminata || bloccata ? "disabled" : ""}
+                   onchange="modificaColli('${r.riga_id_arca}', this.value, ${r.metri_per_collo})">
+          </div>
+          <div class="stat readonly-metri">
+            <div class="label">Metri</div>
+            <div class="valore">${r.quantita_corrente} m</div>
+          </div>
+        ` : `
+          <div class="stat">
+            <div class="label">Quantità (metri)</div>
+            <input type="number" step="any" value="${r.quantita_corrente}" ${r.eliminata || bloccata ? "disabled" : ""}
+                   onchange="modificaQuantita('${r.riga_id_arca}', this.value)">
+          </div>
+        `}
+      </div>
+      <div class="nota-riga">
+        <div class="label">📝 Nota riga</div>
+        <input type="text" value="${(r.nota_riga || '').replace(/"/g,'&quot;')}" placeholder="Aggiungi una nota per questo articolo..."
+               ${r.eliminata || bloccata ? "disabled" : ""}
+               onchange="modificaNotaRiga('${r.riga_id_arca}', this.value)">
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+async function toggleCaricata(rigaId, nuovoValore) {
+  await fetch(`${API}/api/lp/${lpCorrente.lp_id}/riga/${rigaId}/caricata`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ caricata: nuovoValore })
+  });
+  const r = lpCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.caricata = nuovoValore;
+  renderLP();
+}
+
+async function modificaColli(rigaId, valoreColli, metriPerCollo) {
+  const nuoviMetri = parseFloat(valoreColli) * metriPerCollo;
+  await modificaQuantita(rigaId, nuoviMetri);
+  renderLP();
+}
+
+async function modificaQuantita(rigaId, valore) {
+  await fetch(`${API}/api/lp/${lpCorrente.lp_id}/riga/${rigaId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ quantita: parseFloat(valore) })
+  });
+  const r = lpCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.quantita_corrente = parseFloat(valore);
+}
+
+async function modificaNotaRiga(rigaId, testo) {
+  await fetch(`${API}/api/lp/${lpCorrente.lp_id}/riga/${rigaId}/nota`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ testo })
+  });
+  const r = lpCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.nota_riga = testo;
+}
+
+async function eliminaRiga(rigaId) {
+  if (!confirm("Sei sicuro di voler eliminare questa riga?")) return;
+  await fetch(`${API}/api/lp/${lpCorrente.lp_id}/riga/${rigaId}`, { method: "DELETE" });
+  const r = lpCorrente.righe.find(x => x.riga_id_arca === rigaId);
+  if (r) r.eliminata = true;
+  renderLP();
+}
+
+// ---------- Inoltro ad altro tablet ----------
+async function toggleInoltra() {
+  const pannello = document.getElementById("inoltra-pannello");
+  const apparira = !pannello.classList.contains("visibile");
+  pannello.classList.toggle("visibile");
+  if (apparira) {
+    const res = await fetch(`${API}/api/tablets`);
+    const tutti = await res.json();
+    const destinazioni = isTabletPredefinito
+      ? tutti.filter(t => t.id !== tabletId)
+      : tutti.filter(t => t.id === tabletPredefinitoId);
+    if (!destinazioni.length) {
+      pannello.classList.remove("visibile");
+      alert(isTabletPredefinito ? "Non ci sono altri tablet registrati" : "Il tablet predefinito non è configurato");
+      return;
+    }
+    const sel = document.getElementById("inoltra-select-tablet");
+    sel.innerHTML = `<option value="">Scegli tablet...</option>` +
+      destinazioni.map(t => `<option value="${t.id}">${t.nome} ${t.online ? "🟢" : "⚪"}</option>`).join("");
+  }
+}
+
+async function inoltraCamion() {
+  const sel = document.getElementById("inoltra-select-tablet");
+  if (!sel.value) { alert("Seleziona un tablet"); return; }
+  if (!camionCorrente || camionCorrente.id === "senza-camion") return;
+  const destinazione = isTabletPredefinito ? "al tablet selezionato" : "al tablet predefinito";
+  if (!confirm(`Inoltrare tutto il camion "${camionCorrente.nome}" ${destinazione}?`)) return;
+  const res = await fetch(`${API}/api/tablets/${tabletId}/camion/${encodeURIComponent(camionCorrente.id)}/inoltra`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tablet_id: sel.value })
+  });
+  if (res.ok) {
+    camionCorrente = null;
+    lpCorrente = null;
+    document.getElementById("inoltra-pannello").classList.remove("visibile");
+    await ricaricaCamion();
+  } else {
+    const errore = await res.json().catch(() => ({}));
+    alert(errore.detail || "Errore durante l'inoltro del camion");
+  }
+}
+
+async function salvaNotaMagazziniere(testo) {
+  await fetch(`${API}/api/lp/${lpCorrente.lp_id}/nota`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ testo })
+  });
+  lpCorrente.nota_magazziniere = testo;
+}
+
+async function inviaConferma() {
+  if (!confirm("Inviare all'ufficio per l'approvazione?")) return;
+  const btn = document.getElementById("btn-invia");
+  btn.disabled = true;
+  btn.textContent = "Invio in corso...";
+  const res = await fetch(`${API}/api/lp/${lpCorrente.lp_id}/conferma`, { method: "POST" });
+  const esito = await res.json();
+  if (esito.esito === "in_attesa_approvazione") {
+    lpCorrente.stato = "in_attesa_approvazione";
+    document.getElementById("banner-rifiutato").style.display = "none";
+    renderLP();
+  } else {
+    alert("Errore durante l'invio: " + (esito.dettaglio || "errore sconosciuto"));
+    btn.disabled = false;
+    btn.textContent = "Invia";
+  }
+}
+
+async function inviaCamionAllUfficio() {
+  const lpDaInviare = lpRicevuti.filter(lp => lp.stato === "inviato_tablet");
+  if (!lpDaInviare.length || !camionCorrente || camionCorrente.tablet_id !== tabletId) return;
+  if (!lpRicevuti.every(lp => lpPronta(lp))) {
+    alert("Completa tutte le righe di tutte le LP prima di inviare il camion all'ufficio");
+    return;
+  }
+  const nome = camionCorrente.nome;
+  if (!confirm(`Inviare all'ufficio tutte le ${lpDaInviare.length} LP del camion "${nome}"?`)) return;
+  const btn = document.getElementById("btn-invia");
+  btn.disabled = true;
+  btn.textContent = "Invio del camion in corso...";
+  const res = await fetch(`${API}/api/tablets/${tabletId}/camion/${encodeURIComponent(camionCorrente.id)}/conferma`, { method: "POST" });
+  if (!res.ok) {
+    const errore = await res.json().catch(() => ({}));
+    alert(errore.detail || "Errore durante l'invio del camion all'ufficio");
+    btn.disabled = false;
+    btn.textContent = `Invia ${lpDaInviare.length} LP del camion all'ufficio`;
+    return;
+  }
+  lpRicevuti.forEach(lp => {
+    if (lp.stato === "inviato_tablet") lp.stato = "in_attesa_approvazione";
+  });
+  camionCorrente.lp = lpRicevuti;
+  lpCorrente = null;
+  renderDettaglioCamion();
+}
+
+function connettiWebSocket() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws/tablet/${tabletId}`);
+  ws.onopen = () => {
+    document.getElementById("status-testo").textContent = "Connesso";
+    document.getElementById("status-dot").className = "dot on";
+    ricaricaCamion();
+    sincronizzaNomeTablet();
+  };
+  ws.onclose = () => {
+    document.getElementById("status-testo").textContent = "Riconnessione...";
+    document.getElementById("status-dot").className = "dot off";
+    setTimeout(connettiWebSocket, 3000);
+  };
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.tipo === "lp_assegnato") {
+      ricaricaCamion();
+    } else if (msg.tipo === "lp_approvato") {
+      ricaricaCamion();
+    } else if (msg.tipo === "lp_rimosso") {
+      ricaricaCamion();
+    } else if (msg.tipo === "lp_rifiutato") {
+      document.getElementById("motivo-rifiuto").textContent =
+        msg.motivo || "Controlla le quantità e reinvia.";
+      ricaricaCamion().then(() => {
+        if (lpCorrente && lpCorrente.lp_id === msg.lp.lp_id) {
+          document.getElementById("banner-rifiutato").style.display = "block";
+        }
+      });
+    } else if (msg.tipo === "camion_assegnato") {
+      ricaricaCamion();
+    } else if (msg.tipo === "camion_rimosso") {
+      ricaricaCamion();
+    } else if (msg.tipo === "impostazioni_aggiornate") {
+      ricaricaCamion();
+    } else if (msg.tipo === "tablet_aggiornato") {
+      tabletNome = msg.nome;
+      localStorage.setItem("tablet_nome", tabletNome);
+      document.getElementById("titolo").textContent = tabletNome;
+    }
+  };
+  setInterval(() => { if (ws.readyState === 1) ws.send("ping"); }, 25000);
+}
+
+(async function init() {
+  if (!tabletId) {
+    document.querySelector(".account-modifica").style.display = "none";
+    mostraSetup();
+    return;
+  }
+  document.getElementById("titolo").textContent = tabletNome || "Magazziniere";
+  document.getElementById("vuoto").style.display = "block";
+
+  try {
+    const registrazione = await fetch(`${API}/api/tablets/${encodeURIComponent(tabletId)}`);
+    if (registrazione.ok) {
+      const tablet = await registrazione.json();
+      tabletNome = tablet.nome;
+      localStorage.setItem("tablet_nome", tabletNome);
+    } else {
+      await fetch(`${API}/api/tablets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: tabletId, nome: tabletNome || "Tablet" })
+      });
+    }
+    document.getElementById("titolo").textContent = tabletNome || "Magazziniere";
+  } catch (e) { /* non bloccante */ }
+
+  try {
+    await ricaricaCamion();
+  } catch (e) { /* non bloccante */ }
+
+  connettiWebSocket();
+})();
+</script>
+</body>
+</html>
